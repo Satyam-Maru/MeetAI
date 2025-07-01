@@ -33,20 +33,8 @@ export default function RoomPage() {
   if (!token) return <div>Loading...</div>;
 
   return (
-    <div style={{ height: '100vh' }} data-lk-theme="default">
-      <LiveKitRoom
-        serverUrl={LIVEKIT_URL}
-        token={token}
-        connect
-        options={{
-          adaptiveStream: true,
-          dynacast: true,
-        }}
-      >
-        <GridLayout />
-        <RoomAudioRenderer />
-        <ControlBar />
-      </LiveKitRoom>
+    <div>
+      Hello room
     </div>
   );
 }
