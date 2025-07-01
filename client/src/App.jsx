@@ -1,22 +1,13 @@
-import { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Room from "./pages/Room";
 
 function App() {
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    {/* fetch('http://localhost:5000/api/message') */}
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/message`)
-      .then(res => res.json())
-      .then(data => setMessage(data.message))
-      .catch(err => console.error(err));
-  }, []);
-
   return (
-    <div>
-      <h1>React + Express</h1>
-      <p>{message}</p>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/room" element={<Room />} />
+        {/* other routes */}
+      </Routes>
+    </Router>
   );
 }
-
-export default App;
