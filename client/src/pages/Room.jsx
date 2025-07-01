@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { connect, Room, RemoteParticipant, RoomEvent } from "livekit-client";
+import { Room } from "livekit-client";
 
 const LIVEKIT_URL = import.meta.env.LIVEKIT_URL 
 const BACKEND_URL = import.meta.env.BACKEND_URL // Replace with actual domain
@@ -8,26 +8,28 @@ const RoomPage = () => {
   const [room, setRoom] = useState(null);
 
   useEffect(() => {
-    const joinRoom = async () => {
-      const userName = prompt("Enter your name");
-      const roomName = "my-room"; // You can extract from URL if dynamic
+   const joinRoom = async () => {
+        const userName = prompt("Enter your name");
+        const roomName = "my-room";
 
-      // Get token from backend
-      const res = await fetch(`${BACKEND_URL}/get-token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomName, userName }),
-      });
-      const { token } = await res.json();
+        const res = await fetch(`${BACKEND_URL}/get-token`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ roomName, userName }),
+        });
 
-      const room = new Room();
-      await connect(room, LIVEKIT_URL, token);
+        const { token } = await res.json();
 
-      room.localParticipant.setCameraEnabled(true);
-      room.localParticipant.setMicrophoneEnabled(true);
+        const room = new Room();
 
-      setRoom(room);
+        await room.connect(LIVEKIT_URL, token);  // ✅ FIXED: use room.connect()
+
+        room.localParticipant.setCameraEnabled(true);
+        room.localParticipant.setMicrophoneEnabled(true);
+
+        setRoom(room);
     };
+
 
     joinRoom();
 
