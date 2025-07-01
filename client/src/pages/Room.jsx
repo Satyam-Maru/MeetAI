@@ -4,7 +4,7 @@ import { connect, Room, RemoteParticipant, RoomEvent } from "livekit-client";
 const LIVEKIT_URL = import.meta.env.LIVEKIT_URL 
 const BACKEND_URL = import.meta.env.BACKEND_URL // Replace with actual domain
 
-const Room = () => {
+const RoomPage = () => {
   const [room, setRoom] = useState(null);
 
   useEffect(() => {
@@ -44,4 +44,4 @@ const Room = () => {
   );
 };
 
-export default Room;
+export default RoomPage;
