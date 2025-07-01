@@ -6,7 +6,7 @@ const PORT = 5000;
 
 // app.use(cors()); // Allow cross-origin requests
 app.use(cors({
-  origin: 'https://your-frontend.vercel.app',
+  origin: 'https://meet-ai-mauve.vercel.app/',
 }));
 
 
