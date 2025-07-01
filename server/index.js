@@ -1,29 +1,23 @@
-const express = require("express");
-const { AccessToken } = require("livekit-server-sdk");
-const cors = require("cors");
-require("dotenv").config();
+// server/index.js
+import express from 'express';
+import { AccessToken, VideoGrant } from 'livekit-server-sdk';
+import cors from 'cors';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+app.use(cors(), express.json());
 
-const API_KEY = process.env.LIVEKIT_API_KEY;
-const API_SECRET = process.env.LIVEKIT_API_SECRET;
+app.post('/get-token', async (req, res) => {
+  const { room, username } = req.body;
+  if (!room || !username) return res.status(400).json({ error: 'Missing room or username' });
 
-// Endpoint to generate token
-app.post("/get-token", (req, res) => {
-  const { roomName, userName } = req.body;
-
-  const at = new AccessToken(API_KEY, API_SECRET, {
-    identity: userName,
+  const at = new AccessToken(process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET, {
+    identity: username,
   });
-  at.addGrant({ roomJoin: true, room: roomName });
+  at.addGrant(new VideoGrant({ room, roomJoin: true, canPublish: true, canSubscribe: true }));
 
-  const token = at.toJwt();
-  res.json({ token });
+  res.json({ token: await at.toJwt() });
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(process.env.PORT || 3001, () => console.log('Token server running'));
