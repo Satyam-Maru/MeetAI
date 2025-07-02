@@ -31,6 +31,12 @@ const App = () => {
         if (track.kind === 'video') {
           const videoEl = track.attach();
           document.getElementById('video-container').appendChild(videoEl);
+        } else if (track.kind === 'audio') {
+          const audioEl = track.attach();
+          audioEl.autoplay = true;
+          audioEl.muted = false;
+          audioEl.play().catch(console.error);
+          document.body.appendChild(audioEl);
         }
       });
 
