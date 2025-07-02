@@ -19,7 +19,7 @@ const App = () => {
   
   const joinRoom = async () => {
     try {
-      const res = await axios.post(import.meta.env.VITE_BACKEND_URL + '/get-token', {
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/get-token`, {
         identity,
         roomName,
       });
