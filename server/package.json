@@ -2,6 +2,7 @@
   "name": "server",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
@@ -12,10 +13,13 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bloom-filters": "^3.0.4",
     "cors": "^2.8.5",
     "dotenv": "^17.0.1",
     "express": "^5.1.0",
-    "livekit-server-sdk": "^2.13.1"
+    "ioredis": "^5.6.1",
+    "livekit-server-sdk": "^2.13.1",
+    "mongodb": "^6.17.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

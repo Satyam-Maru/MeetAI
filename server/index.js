@@ -1,14 +1,63 @@
-const express = require('express');
-const cors = require('cors');
-const { AccessToken } = require('livekit-server-sdk');
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import Redis from 'ioredis';
+import crypto from 'crypto';
+import { AccessToken } from 'livekit-server-sdk';
+
+import { loadFilter, saveFilter } from './micro_services/bloom-filter.js';
+
+dotenv.config();
 
 const app = express();
+const redis = new Redis(process.env.REDIS_URL, { tls: {} });
+
+let bloomFilter = null;
+
+async function initializeBloom() {
+  bloomFilter = await loadFilter('livekit:room_bloom');
+  console.log('✅ Bloom filter loaded from MongoDB Atlas');
+}
+await initializeBloom();
+
 app.use(cors());
 app.use(express.json());
-require("dotenv").config();
+app.use('/get-token', express.json());
+app.use('/livekit-webhook', express.raw({ type: '*/*' }));
 
+// ✅ Token route
 app.post('/get-token', async (req, res) => {
-  const { roomName, identity } = req.body;
+  const { roomName, identity, isHost } = req.body;
+
+  if (!roomName || !identity) {
+    return res.status(400).json({ error: 'Missing roomName or identity' });
+  }
+  try {
+    if (isHost) {
+      const exists = await redis.sismember('livekit:room_set', roomName);
+      if (exists) {
+        console.log(`error 409: room already exists`)
+        return res.status(409).json({ error: 'Room already exists' });
+      }
+  
+      await redis.sadd('livekit:room_set', roomName);
+      bloomFilter.add(roomName);
+      await saveFilter('livekit:room_bloom', bloomFilter);
+    } else {
+      if (!bloomFilter.has(roomName)) {
+        console.log('error 404: room does not exist');
+        return res.status(404).json({ error: 'Room does not exist' });
+      }
+  
+      const confirmed = await redis.sismember('livekit:room_set', roomName);
+      if (!confirmed) {
+        console.log('error 404: room not active');
+        return res.status(404).json({ error: 'Room not active' });
+      }
+    }
+  } catch (error) {
+    console.log('error: ', error)
+  }
 
   const token = new AccessToken(
     process.env.LIVEKIT_API_KEY,
@@ -17,21 +66,21 @@ app.post('/get-token', async (req, res) => {
   );
 
   token.addGrant({
-    roomJoin: true,
     room: roomName,
+    roomCreate: isHost,
+    roomJoin: true,
     canPublish: true,
     canSubscribe: true,
   });
 
   res.json({ token: await token.toJwt() });
-  console.log('token', token)
 });
 
 app.get('/', (req, res) => {
-    res.send('hello livekit backend')
-})
+  res.send('✅ LiveKit + Bloom Filter + MongoDB Atlas working');
+});
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Token server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
