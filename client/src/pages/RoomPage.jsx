@@ -8,7 +8,6 @@ import {
   createLocalVideoTrack,
 } from "livekit-client";
 
-
 const RoomPage = () => {
   const [searchParams] = useSearchParams();
   const isHost = searchParams.get("host") === "true";
@@ -18,15 +17,18 @@ const RoomPage = () => {
   const [showModal, setShowModal] = useState(!isHost); // modal is shown initially
 
   const joinRoom = async () => {
-    const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/get-token`, {
-      roomName,
-      identity,
-      isHost: false,
-    });
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/get-token`,
+      {
+        roomName,
+        identity,
+        isHost: false,
+      }
+    );
 
     const token = res.data.token;
     const room = new Room();
-    
+
     room.on(RoomEvent.TrackSubscribed, (track) => {
       const el = track.attach();
       document.getElementById("video-container").appendChild(el);
@@ -37,7 +39,9 @@ const RoomPage = () => {
     try {
       const videoTrack = await createLocalVideoTrack();
       await room.localParticipant.publishTrack(videoTrack);
-      document.getElementById("video-container").appendChild(videoTrack.attach());
+      document
+        .getElementById("video-container")
+        .appendChild(videoTrack.attach());
     } catch {}
 
     try {
@@ -51,23 +55,29 @@ const RoomPage = () => {
 
   return (
     <div style={{ padding: 20, position: "relative" }}>
-      <h2>Live Room: {roomName}</h2>
       <div id="video-container" style={{ marginTop: 20 }}></div>
 
       {/* Name Input Modal */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
-            <h3>Enter your name to join</h3>
-            <input
-              style={styles.input}
-              placeholder="Your name"
-              value={identity}
-              onChange={(e) => setIdentity(e.target.value)}
-            />
-            <button style={styles.button} onClick={joinRoom} disabled={!identity.trim()}>
-              Join Room
-            </button>
+            <div>
+              <h2>Live Room: {roomName}</h2>
+              <h3>Enter your name to join</h3>
+              <input
+                style={styles.input}
+                placeholder="Your name"
+                value={identity}
+                onChange={(e) => setIdentity(e.target.value)}
+              />
+              <button
+                style={styles.button}
+                onClick={joinRoom}
+                disabled={!identity.trim()}
+              >
+                Join Room
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -93,6 +103,9 @@ const styles = {
     padding: "50px",
     borderRadius: "8px",
     textAlign: "center",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     width: "300px",
     boxShadow: "0 0 10px rgba(0,0,0,0.2)",
   },
