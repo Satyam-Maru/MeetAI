@@ -25,24 +25,51 @@ app.use(cors());
 app.use(express.json());
 app.use('/get-token', express.json());
 
-// ✅ Token route
 app.post('/get-token', async (req, res) => {
   const { roomName, identity, isHost } = req.body;
-
+  
   if (!roomName || !identity) {
     return res.status(400).json({ error: 'Missing roomName or identity' });
   }
   try {
+    
+    const token = new AccessToken(
+      process.env.LIVEKIT_API_KEY,
+      process.env.LIVEKIT_API_SECRET,
+      { identity }
+    );
+    
+    token.addGrant({
+      room: roomName,
+      roomCreate: isHost,
+      roomJoin: true,
+      canPublish: true,
+      canSubscribe: true,
+    });
+
     if (isHost) {
       const exists = await redis.sismember('livekit:room_set', roomName);
       if (exists) {
         console.log(`error 409: room already exists`)
         return res.status(409).json({ error: 'Room already exists' });
       }
-  
+      
+      // will be used to end the room
+      await redis.set(`livekit:host:${roomName}`, identity);
+
+      // used to check the availability of the room
       await redis.sadd('livekit:room_set', roomName);
       bloomFilter.add(roomName);
+
+      // saved in mongo atlas
       await saveFilter('livekit:room_bloom', bloomFilter);
+
+      return res.json({
+        token: await token.toJwt(),
+        roomName,
+        url: `${process.env.VERCEL_URL}/room/${roomName}?host=true`
+      });
+
     } else {
       if (!bloomFilter.has(roomName)) {
         console.log('error 404: room does not exist');
@@ -54,26 +81,14 @@ app.post('/get-token', async (req, res) => {
         console.log('error 404: room not active');
         return res.status(404).json({ error: 'Room not active' });
       }
+
+      return res.json({
+        token: await token.toJwt(),
+      });
     }
   } catch (error) {
     console.log('error: ', error)
-  }
-
-  const token = new AccessToken(
-    process.env.LIVEKIT_API_KEY,
-    process.env.LIVEKIT_API_SECRET,
-    { identity }
-  );
-
-  token.addGrant({
-    room: roomName,
-    roomCreate: isHost,
-    roomJoin: true,
-    canPublish: true,
-    canSubscribe: true,
-  });
-
-  res.json({ token: await token.toJwt() });
+    }
 });
 
 // LiveKit WebhookReceiver
@@ -82,30 +97,41 @@ const receiver = new WebhookReceiver(
   process.env.LIVEKIT_API_SECRET
 );
 
-// 🧠 Raw body middleware *just for* this webhook route
 app.post(
   '/livekit-webhook',
   bodyParser.raw({ type: 'application/webhook+json' }),
   async (req, res) => {
     try {
       // Verify and parse the webhook using LiveKit's receiver
-      const event = await receiver.receive(req.body, req.get('Authorization'));
-
-      console.log('✅ Verified Webhook Event:', event);
+      const authHeader = req.get('Authorization');
+      const event = await receiver.receive(req.body, authHeader);
 
       const { event: eventType, room, participant } = event;
-
+      
+      const hostIdentity = await redis.get(`livekit:host:${room?.name}`);
+      
+      console.log('************************');
+      console.log(`Room: ${room?.name}`)
+      console.log(`EventType: ${eventType}`);
+      console.log(`Identity: ${participant?.identity}, Type: ${typeof participant?.identity}`);
+      console.log(`Host Identity: ${hostIdentity}, Type: ${typeof hostIdentity}`);
+      
+      console.log('************************\n\n');
+      
       if (
-        (eventType === 'participant_left' && participant?.identity === 'host') ||
+        (eventType === 'participant_left' && participant?.identity === hostIdentity) ||
         eventType === 'room_finished'
       ) {
-        await redis.srem('livekit:room_set', room);
-        console.log(`🧹 Room "${room}" removed from Redis`);
+        await redis.srem('livekit:room_set', room?.name);
+        await redis.del(`livekit:host:${room?.name}`);
+        console.log(`🧹 Room "${room?.name}" removed from Redis (host left)`);
       }
 
       res.sendStatus(200);
     } catch (err) {
       console.error('❌ Webhook validation failed:', err.message);
+      console.log('Authorization Header:', req.get('Authorization'));
+      console.log('Raw Payload:', req.body.toString('utf8'));
       res.sendStatus(403);
     }
   }
@@ -124,4 +150,4 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-});
+}); 

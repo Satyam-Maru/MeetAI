@@ -8,10 +8,14 @@ import {
   setLogLevel,
   LogLevel,
 } from "livekit-client";
+import { useNavigate } from 'react-router-dom';
 
 //setLogLevel(LogLevel.debug); // Optional for debugging
 
 const App = () => {
+
+  const navigate = useNavigate();
+
   const [roomName, setRoomName] = useState("");
   const [identity, setIdentity] = useState("");
   const [roomName1, setRoomName1] = useState("");
@@ -21,7 +25,7 @@ const App = () => {
   const createRoom = async (isHost) => {
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_LOCALHOST_URL}/get-token`,
+        `${import.meta.env.VITE_BACKEND_URL}/get-token`,
         {
           identity:isHost?identity:identity1,
           roomName:isHost?roomName:roomName1,
@@ -34,6 +38,12 @@ const App = () => {
 
       if(res.data.error){
         console.warn('error from backend: ', error);
+      }
+
+      if (isHost) {
+        navigate(`/room/${res.data.roomName}?host=true`); // 🎯 Redirect host to shareable URL
+      } else {
+        // Join logic will go here for guests later
       }
 
       room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
@@ -54,7 +64,7 @@ const App = () => {
       });
 
       await room.connect(
-        import.meta.env.VITE_LIVEKIT_URL, // <- Update this
+        import.meta.env.VITE_LIVEKIT_URL,
         token
       );
 

@@ -44,6 +44,7 @@ async function saveFilter(key, filter) {
 }
 
 async function resetFilter(key) {
+  console.log('resetting the filter')
   const filter = BloomFilter.create(1000, 0.01); // reset with same settings
   await saveFilter(key, filter);
   console.log(`🔁 Bloom filter reset for key: ${key}`);
