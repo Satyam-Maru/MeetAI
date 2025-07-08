@@ -26,26 +26,50 @@ const RoomPage = () => {
   }, []);
 
   const joinRoom = async (userName = identity) => {
-    const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/get-token`, {
-      roomName,
-      identity: userName,
-      isHost,
-    });
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/get-token`,
+      {
+        roomName,
+        identity: userName,
+        isHost,
+      }
+    );
 
     const token = res.data.token;
     const roomInstance = new Room();
 
-    roomInstance.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
-      if (participant.isLocal || track.kind !== "video") return;
-      const key = `${participant.identity}-${publication.source}`;
-      setRemoteTracks(prev => {
-        if (prev.some(t => t.key === key)) return prev;
-        return [...prev, { key, track, identity: participant.identity }];
-      });
-    });
+    roomInstance.on(
+      RoomEvent.TrackSubscribed,
+      (track, publication, participant) => {
+        if (participant.isLocal) return;
+
+        const key = `${participant.identity}-${publication.source}`;
+
+        if (track.kind === "audio") {
+          // ✅ Attach and play audio
+          const audioEl = track.attach();
+          audioEl.autoplay = true;
+          audioEl.muted = false;
+          audioEl
+            .play()
+            .catch((e) => console.warn("Audio autoplay failed:", e));
+          document.body.appendChild(audioEl);
+          return; // stop here for audio
+        }
+
+        if (track.kind === "video") {
+          setRemoteTracks((prev) => {
+            if (prev.some((t) => t.key === key)) return prev;
+            return [...prev, { key, track, identity: participant.identity }];
+          });
+        }
+      }
+    );
 
     roomInstance.on(RoomEvent.ParticipantDisconnected, (participant) => {
-      setRemoteTracks(prev => prev.filter(t => !t.key.startsWith(participant.identity)));
+      setRemoteTracks((prev) =>
+        prev.filter((t) => !t.key.startsWith(participant.identity))
+      );
     });
 
     await roomInstance.connect(import.meta.env.VITE_LIVEKIT_URL, token);
@@ -72,7 +96,13 @@ const RoomPage = () => {
   return (
     <div style={{ padding: 20, position: "relative", height: "100vh" }}>
       <div id="video-grid" style={styles.gridContainer}>
-        {localTrack && <VideoTile identity={localTrack.identity} track={localTrack.track} isLocal />}
+        {localTrack && (
+          <VideoTile
+            identity={localTrack.identity}
+            track={localTrack.track}
+            isLocal
+          />
+        )}
         {remoteTracks.map(({ key, track, identity }) => (
           <VideoTile key={key} identity={identity} track={track} />
         ))}
@@ -116,14 +146,16 @@ const VideoTile = ({ identity, track, isLocal = false }) => {
     if (isLocal) el.style.transform = "scaleX(-1)";
     ref.current?.appendChild(el);
     return () => {
-      track.detach().forEach(el => el.remove());
+      track.detach().forEach((el) => el.remove());
     };
   }, [track]);
 
   return (
     <div style={styles.videoTile}>
       <div ref={ref} style={styles.videoElement}></div>
-      <div style={styles.nameTag}>{identity} {isLocal && "(You)"}</div>
+      <div style={styles.nameTag}>
+        {identity} {isLocal && "(You)"}
+      </div>
     </div>
   );
 };
