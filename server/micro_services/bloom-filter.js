@@ -18,7 +18,6 @@ async function loadFilter(key) {
   if (doc?.filterJSON) {
     try {
       const filter = BloomFilter.fromJSON(doc.filterJSON);
-      console.log('✅ Loaded Bloom filter from MongoDB');
       return filter;
     } catch (err) {
       console.warn('⚠️ Failed to load Bloom filter from JSON:', err.message);

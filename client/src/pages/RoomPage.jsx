@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import {
@@ -9,59 +9,79 @@ import {
 } from "livekit-client";
 
 const RoomPage = () => {
+  const { roomName } = useParams();
   const [searchParams] = useSearchParams();
   const isHost = searchParams.get("host") === "true";
-  const { roomName } = useParams();
-  const [identity, setIdentity] = useState("");
-  const [joined, setJoined] = useState(false);
-  const [showModal, setShowModal] = useState(!isHost); // modal is shown initially
+  const prefilledIdentity = searchParams.get("identity") || "";
 
-  const joinRoom = async () => {
-    const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/get-token`,
-      {
-        roomName,
-        identity,
-        isHost: false,
-      }
-    );
+  const [identity, setIdentity] = useState(prefilledIdentity);
+  const [showModal, setShowModal] = useState(!prefilledIdentity);
+  const [room, setRoom] = useState(null);
+  const [localTrack, setLocalTrack] = useState(null);
+  const [remoteTracks, setRemoteTracks] = useState([]);
 
-    const token = res.data.token;
-    const room = new Room();
+  useEffect(() => {
+    if (prefilledIdentity) joinRoom(prefilledIdentity);
+    return () => room?.disconnect();
+  }, []);
 
-    room.on(RoomEvent.TrackSubscribed, (track) => {
-      const el = track.attach();
-      document.getElementById("video-container").appendChild(el);
+  const joinRoom = async (userName = identity) => {
+    const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/get-token`, {
+      roomName,
+      identity: userName,
+      isHost,
     });
 
-    await room.connect(import.meta.env.VITE_LIVEKIT_URL, token);
+    const token = res.data.token;
+    const roomInstance = new Room();
+
+    roomInstance.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+      if (participant.isLocal || track.kind !== "video") return;
+      const key = `${participant.identity}-${publication.source}`;
+      setRemoteTracks(prev => {
+        if (prev.some(t => t.key === key)) return prev;
+        return [...prev, { key, track, identity: participant.identity }];
+      });
+    });
+
+    roomInstance.on(RoomEvent.ParticipantDisconnected, (participant) => {
+      setRemoteTracks(prev => prev.filter(t => !t.key.startsWith(participant.identity)));
+    });
+
+    await roomInstance.connect(import.meta.env.VITE_LIVEKIT_URL, token);
 
     try {
       const videoTrack = await createLocalVideoTrack();
-      await room.localParticipant.publishTrack(videoTrack);
-      document
-        .getElementById("video-container")
-        .appendChild(videoTrack.attach());
-    } catch {}
+      await roomInstance.localParticipant.publishTrack(videoTrack);
+      setLocalTrack({ track: videoTrack, identity: userName });
+    } catch (err) {
+      console.warn("Could not publish video:", err);
+    }
 
     try {
       const audioTrack = await createLocalAudioTrack();
-      await room.localParticipant.publishTrack(audioTrack);
-    } catch {}
+      await roomInstance.localParticipant.publishTrack(audioTrack);
+    } catch (err) {
+      console.warn("Could not publish audio:", err);
+    }
 
+    setRoom(roomInstance);
     setShowModal(false);
-    setJoined(true);
   };
 
   return (
-    <div style={{ padding: 20, position: "relative" }}>
-      <div id="video-container" style={{ marginTop: 20 }}></div>
+    <div style={{ padding: 20, position: "relative", height: "100vh" }}>
+      <div id="video-grid" style={styles.gridContainer}>
+        {localTrack && <VideoTile identity={localTrack.identity} track={localTrack.track} isLocal />}
+        {remoteTracks.map(({ key, track, identity }) => (
+          <VideoTile key={key} identity={identity} track={track} />
+        ))}
+      </div>
 
-      {/* Name Input Modal */}
       {showModal && (
         <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <div>
+          <div style={styles.modalContentWrapper}>
+            <div style={styles.modalContent}>
               <h2>Live Room: {roomName}</h2>
               <h3>Enter your name to join</h3>
               <input
@@ -72,7 +92,7 @@ const RoomPage = () => {
               />
               <button
                 style={styles.button}
-                onClick={joinRoom}
+                onClick={() => joinRoom()}
                 disabled={!identity.trim()}
               >
                 Join Room
@@ -85,7 +105,71 @@ const RoomPage = () => {
   );
 };
 
+const VideoTile = ({ identity, track, isLocal = false }) => {
+  const ref = useRef();
+
+  useEffect(() => {
+    const el = track.attach();
+    el.style.width = "100%";
+    el.style.height = "100%";
+    el.style.objectFit = "cover";
+    if (isLocal) el.style.transform = "scaleX(-1)";
+    ref.current?.appendChild(el);
+    return () => {
+      track.detach().forEach(el => el.remove());
+    };
+  }, [track]);
+
+  return (
+    <div style={styles.videoTile}>
+      <div ref={ref} style={styles.videoElement}></div>
+      <div style={styles.nameTag}>{identity} {isLocal && "(You)"}</div>
+    </div>
+  );
+};
+
 const styles = {
+  gridContainer: {
+    display: "grid",
+    gap: "10px",
+    width: "100%",
+    height: "100%",
+    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+    alignItems: "center",
+    justifyItems: "center",
+    padding: "10px",
+    overflowY: "auto",
+  },
+  videoTile: {
+    position: "relative",
+    width: "100%",
+    aspectRatio: "16 / 9",
+    backgroundColor: "#1e1e1e",
+    borderRadius: "8px",
+    overflow: "hidden",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  videoElement: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  nameTag: {
+    position: "absolute",
+    bottom: "8px",
+    left: "8px",
+    color: "white",
+    background: "rgba(0, 0, 0, 0.5)",
+    padding: "4px 8px",
+    borderRadius: "4px",
+    fontSize: "14px",
+    zIndex: 1,
+  },
   modalOverlay: {
     position: "fixed",
     top: 0,
@@ -98,14 +182,17 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
   },
-  modalContent: {
-    background: "#1e1e1e",
-    padding: "50px",
-    borderRadius: "8px",
-    textAlign: "center",
+  modalContentWrapper: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    width: "100%",
+  },
+  modalContent: {
+    background: "#1e1e1e",
+    padding: "40px",
+    borderRadius: "8px",
+    textAlign: "center",
     width: "300px",
     boxShadow: "0 0 10px rgba(0,0,0,0.2)",
   },
