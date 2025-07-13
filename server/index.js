@@ -22,7 +22,7 @@ async function initializeBloom() {
 // await initializeBloom();
 
 app.use(cookieParser());
-app.use(cors({ credentials: true, origin: process.env.VITE_LOCALHOST }));
+app.use(cors({ credentials: true, origin: process.env.VERCEL_URL }));
 app.use(express.json());
 
 // Routes
