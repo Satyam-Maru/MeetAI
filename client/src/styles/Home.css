@@ -1,0 +1,170 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 1000px;
+  max-height: 90vh;
+  border-radius: 16px;
+  padding: 2rem;
+  overflow: auto;
+}
+
+.title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 1.5rem;
+  font-family: 'Inter', sans-serif;
+  text-align: center;
+}
+
+.welcome-message {
+  margin-top: 1rem;
+  color: #4a5568;
+}
+
+/* Auth Modals */
+.auth-options {
+  display: flex;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.auth-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  background-color: rgb(28, 27, 27);
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.auth-button:hover {
+  background-color: black;
+}
+
+.auth-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  outline: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.auth-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;  
+}
+
+.auth-form input {
+  padding: 12px;
+  border: 1px solid black;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.auth-form button {
+  padding: 12px;
+  background-color: rgb(28, 27, 27);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.auth-form button:hover{
+  background-color: black;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: black;
+  margin: 10px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid black;
+}
+
+.divider::before {
+  margin-right: 10px;
+}
+
+.divider::after {
+  margin-left: 10px;
+}
+
+.auth-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.close-button {
+  background: none;
+  border: 1px solid black;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 10px;
+  transition: all 0.2s;
+}
+
+.close-button:hover {
+  opacity: 0.9;
+  background-color: red;
+  border: 1px solid red;
+}
+
+.close-button svg {
+  display: block;
+}
+
+.close-button svg path {
+  stroke: black; /* Red color for the X */
+}
+
+.close-button:hover svg path {
+  stroke: white; /* Darker red on hover */
+}

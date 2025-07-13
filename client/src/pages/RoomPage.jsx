@@ -27,7 +27,7 @@ const RoomPage = () => {
 
   const joinRoom = async (userName = identity) => {
     const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/get-token`,
+      `${import.meta.env.VITE_LOCALHOST_URL}/get-token`,
       {
         roomName,
         identity: userName,
@@ -46,15 +46,12 @@ const RoomPage = () => {
         const key = `${participant.identity}-${publication.source}`;
 
         if (track.kind === "audio") {
-          // ✅ Attach and play audio
           const audioEl = track.attach();
           audioEl.autoplay = true;
           audioEl.muted = false;
-          audioEl
-            .play()
-            .catch((e) => console.warn("Audio autoplay failed:", e));
+          audioEl.play().catch((e) => console.warn("Audio autoplay failed:", e));
           document.body.appendChild(audioEl);
-          return; // stop here for audio
+          return;
         }
 
         if (track.kind === "video") {
@@ -94,7 +91,7 @@ const RoomPage = () => {
   };
 
   return (
-    <div style={{ padding: 20, position: "relative", height: "100vh" }}>
+    <div style={styles.pageContainer}>
       <div id="video-grid" style={styles.gridContainer}>
         {localTrack && (
           <VideoTile
@@ -142,7 +139,7 @@ const VideoTile = ({ identity, track, isLocal = false }) => {
     const el = track.attach();
     el.style.width = "100%";
     el.style.height = "100%";
-    el.style.objectFit = "cover";
+    el.style.objectFit = "contain"; // ✅ Show full video without cropping
     if (isLocal) el.style.transform = "scaleX(-1)";
     ref.current?.appendChild(el);
     return () => {
@@ -161,21 +158,28 @@ const VideoTile = ({ identity, track, isLocal = false }) => {
 };
 
 const styles = {
+  pageContainer: {
+    height: "100vh",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+  },
   gridContainer: {
+    flex: 1,
     display: "grid",
     gap: "10px",
-    width: "100%",
-    height: "100%",
-    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+    padding: "10px",
+    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
     alignItems: "center",
     justifyItems: "center",
-    padding: "10px",
     overflowY: "auto",
+    overflowX: "hidden",
   },
   videoTile: {
     position: "relative",
     width: "100%",
-    aspectRatio: "16 / 9",
+    maxWidth: "100%",
+    aspectRatio: "4 / 3", // ✅ Works well for both portrait & landscape
     backgroundColor: "#1e1e1e",
     borderRadius: "8px",
     overflow: "hidden",
@@ -186,7 +190,7 @@ const styles = {
   videoElement: {
     width: "100%",
     height: "100%",
-    objectFit: "cover",
+    objectFit: "contain", // ✅ Prevent crop for mobile portrait users
     display: "flex",
     alignItems: "center",
     justifyContent: "center",

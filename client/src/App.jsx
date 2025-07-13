@@ -1,59 +1,22 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import Home from "./pages/Home";
+import Room from "./pages/Room";
+import "./App.css";
 
 const App = () => {
-  const navigate = useNavigate();
-  const [roomName, setRoomName] = useState("");
-  const [identity, setIdentity] = useState("");
-  const [roomName1, setRoomName1] = useState("");
-  const [identity1, setIdentity1] = useState("");
-
   return (
-    <>
-      <div style={{ padding: "20px" }}>
-        <h2>Create LiveKit Room</h2>
-        <input
-          placeholder="Room name"
-          value={roomName}
-          onChange={(e) => setRoomName(e.target.value)}
-        />
-        <input
-          placeholder="Your name"
-          value={identity}
-          onChange={(e) => setIdentity(e.target.value)}
-        />
-        <button
-          onClick={() =>
-            navigate(`/room/${roomName}?host=true&identity=${identity}`)
-          }
-          disabled={!roomName || !identity}
-        >
-          Create Room
-        </button>
-      </div>
-
-      <div style={{ padding: "20px" }}>
-        <h2>Join LiveKit Room</h2>
-        <input
-          placeholder="Room name"
-          value={roomName1}
-          onChange={(e) => setRoomName1(e.target.value)}
-        />
-        <input
-          placeholder="Your name"
-          value={identity1}
-          onChange={(e) => setIdentity1(e.target.value)}
-        />
-        <button
-          onClick={() =>
-            navigate(`/room/${roomName1}?identity=${identity1}`)
-          }
-          disabled={!roomName1 || !identity1}
-        >
-          Join Room
-        </button>
-      </div>
-    </>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/room" element={<Room />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 };
 

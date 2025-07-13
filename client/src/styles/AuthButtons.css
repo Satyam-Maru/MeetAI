@@ -1,0 +1,29 @@
+.button-container {
+  display: flex;
+  justify-content: center;
+}
+
+.google-signin-button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #ddd;
+  background-color: grey;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.google-signin-button:hover {
+  background-color: black;
+  transform: translateY(-2px);
+}
+
+.google-signin-button:active {
+  transform: translateY(0);
+}
