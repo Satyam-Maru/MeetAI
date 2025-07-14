@@ -20,6 +20,13 @@ export default (redis) => {
         const { event: eventType, room, participant } = event;
         const hostIdentity = await redis.get(`livekit:host:${room?.name}`);
 
+        console.log('************************');
+        console.log(`Room: ${room?.name}`)
+        console.log(`EventType: ${eventType}`);
+        console.log(`Identity: ${participant?.identity}, Type: ${typeof participant?.identity}`);
+        console.log(`Host Identity: ${hostIdentity}, Type: ${typeof hostIdentity}`);
+        console.log('************************\n\n');
+
         if (
           (eventType === 'participant_left' && participant?.identity === hostIdentity) ||
           eventType === 'room_finished'

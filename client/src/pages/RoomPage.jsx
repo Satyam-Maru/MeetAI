@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import {
   Room,
   RoomEvent,
@@ -20,14 +21,40 @@ const RoomPage = () => {
   const [localTrack, setLocalTrack] = useState(null);
   const [remoteTracks, setRemoteTracks] = useState([]);
 
+  const navigate = useNavigate();
+  const url = import.meta.env.VITE_PLATFORM == 'dev' ? import.meta.env.VITE_LOCALHOST_URL : import.meta.env.VITE_BACKEND_URL;
+
+  // Check authentication status on initial load
+  const checkAuthStatus = async () => {
+    try {
+      const response = await axios.get(`${url}/api/auth/status`);
+      if (response.data.user) {
+        console.log(`auth success, username: ${JSON.parse(response.data.user).name}`);
+      }else{
+        navigate('/', {replace:true})
+      }
+    } catch (error) {
+      // alert("Auth check failed:", error);
+      console.log(error)
+      navigate('/', {replace:true})
+    }
+  };
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, [navigate]);
+
   useEffect(() => {
     if (prefilledIdentity) joinRoom(prefilledIdentity);
     return () => room?.disconnect();
   }, []);
 
   const joinRoom = async (userName = identity) => {
+
+    console.log(`roomName: ${roomName}\n identity: ${userName}\n isHost: ${isHost}`)
+
     const res = await axios.post(
-      `${import.meta.env.VITE_LOCALHOST_URL}/get-token`,
+      `${url}/get-token`,
       {
         roomName,
         identity: userName,
@@ -231,6 +258,7 @@ const styles = {
     textAlign: "center",
     width: "300px",
     boxShadow: "0 0 10px rgba(0,0,0,0.2)",
+    color: '#e1d9d9ff',
   },
   input: {
     width: "100%",

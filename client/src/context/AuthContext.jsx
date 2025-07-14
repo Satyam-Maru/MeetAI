@@ -13,9 +13,11 @@ export const AuthProvider = ({ children }) => {
   const [authMode, setAuthMode] = useState("signin"); // 'signin' or 'signup'
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  const url = import.meta.env.VITE_PLATFORM == 'dev' ? import.meta.env.VITE_LOCALHOST_URL : import.meta.env.VITE_BACKEND_URL;
+
   useEffect(() => {
     axios
-      .get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/status`, { withCredentials: true })
+      .get(`${url}/api/auth/status`, { withCredentials: true })
       .then((res) => {
         if (res.data.user) { 
           setUser(JSON.parse(res.data.user));
@@ -30,7 +32,7 @@ export const AuthProvider = ({ children }) => {
 
   const handleLoginSuccess = async ({ token }) => {
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, { token });
+      const res = await axios.post(`${url}/api/auth/login`, { token });
       setUser(res.data.user);
       setIsLoggedIn(true);
       setShowAuthModal(false);
@@ -42,7 +44,7 @@ export const AuthProvider = ({ children }) => {
   const handleEmailLogin = async (isSignUp) => {
     try {
       const endpoint = isSignUp ? "/api/auth/signup" : "/api/auth/login";
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}${endpoint}`, { email, password });
+      const res = await axios.post(`${url}${endpoint}`, { email, password });
       setUser(res.data.user);
       setIsLoggedIn(true);
       setShowAuthModal(false);
@@ -52,7 +54,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const handleLogout = async () => {
-    await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`);
+    await axios.post(`${url}/api/auth/logout`);
     setUser(null);
     setIsLoggedIn(false);
     window.location.href = "/";

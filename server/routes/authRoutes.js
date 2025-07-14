@@ -6,6 +6,7 @@ const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 router.get('/status', (req, res) => {
+  console.log(`hi inside /status`);
   if (req.cookies.authToken) {
     return res.json({ user: req.cookies.user || null });
   }
@@ -15,6 +16,8 @@ router.get('/status', (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { token } = req.body;
+
+    console.log(`hi inside /login`);
 
     const ticket = await client.verifyIdToken({
       idToken: token,
@@ -59,6 +62,8 @@ router.post('/signup', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log(`hi inside /signup`);
+
     const user = {
       name: email.split('@')[0],
       password: password,
@@ -92,6 +97,7 @@ router.post('/signup', async (req, res) => {
 })
 
 router.post('/logout', (req, res) => {
+  console.log(`hi inside /logout`);
   res.clearCookie('authToken');
   res.clearCookie('user')
   res.json({ message: 'Logged out' });

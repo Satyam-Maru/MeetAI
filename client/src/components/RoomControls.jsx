@@ -1,11 +1,13 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, use } from "react";
 import "../styles/RoomControls.css";
 import Dice from "../assets/dice-svg.svg";
 import Modal from "react-modal";
+import { useNavigate } from "react-router-dom";
 
 Modal.setAppElement("#root");
 
 const RoomControls = ({ onLogout, user }) => {
+  const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [roomName, setRoomName] = useState("");
@@ -56,6 +58,7 @@ const RoomControls = ({ onLogout, user }) => {
     }
     // Here you would typically call an API to create the room
     console.log("Creating room:", roomName);
+    navigate(`/room/${roomName}?host=true&identity=${user.name}`);
     setShowCreateModal(false);
     setRoomName("");
   };

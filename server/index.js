@@ -12,23 +12,24 @@ import webhookRoutes from './routes/webHookRoutes.js';
 dotenv.config();
 
 const app = express();
-// const redis = new Redis(process.env.REDIS_URL, { tls: {} });
+const redis = new Redis(process.env.REDIS_URL, { tls: {} });
 
 let bloomFilter = null;
 async function initializeBloom() {
   bloomFilter = await loadFilter('livekit:room_bloom');
   console.log('✅ Bloom filter loaded from MongoDB Atlas');
 }
-// await initializeBloom();
+await initializeBloom();
 
 app.use(cookieParser());
-app.use(cors({ credentials: true, origin: process.env.VERCEL_URL }));
+const origin = process.env.PLATFORM == 'dev'? process.env.VITE_LOCALHOST : process.env.VERCEL_URL;
+app.use(cors({ credentials: true, origin: origin }));
 app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
-// app.use('/get-token', tokenRoutes(redis, bloomFilter));
-// app.use('/livekit-webhook', webhookRoutes(redis));
+app.use('/get-token', tokenRoutes(redis, bloomFilter));
+app.use('/livekit-webhook', webhookRoutes(redis));
 
 app.post('/test', (req, res) => {
   console.log('✅ Test webhook hit!');

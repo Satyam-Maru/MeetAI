@@ -38,10 +38,12 @@ export default (redis, bloomFilter) => {
         bloomFilter.add(roomName);
         await saveFilter('livekit:room_bloom', bloomFilter);
 
+        const url = process.env.PLATFORM == 'dev'? process.env.VITE_LOCALHOST : process.env.VERCEL_URL;
+
         return res.json({ 
           token: await token.toJwt(),
           roomName,
-          url: `${process.env.VERCEL_URL}/${roomName}?host=true`,
+          url: `${url}/${roomName}?host=true`,
         });
       } else {
         if (!bloomFilter.has(roomName)) {
