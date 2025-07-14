@@ -79,8 +79,8 @@ router.post('/signup', async (req, res) => {
 
     res.cookie('authToken', authToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'None',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -89,6 +89,8 @@ router.post('/signup', async (req, res) => {
       email: user.email,
       photoURL: user.photoURL
     }), {
+      secure: true,
+      sameSite: 'None',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -101,8 +103,16 @@ router.post('/signup', async (req, res) => {
 
 router.post('/logout', (req, res) => {
   console.log(`hi inside /logout`);
-  res.clearCookie('authToken');
-  res.clearCookie('user')
+  res.clearCookie('authToken', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'None'
+  });
+
+  res.clearCookie('user', {
+    secure: true,
+    sameSite: 'None'
+  });
   res.json({ message: 'Logged out' });
 });
 
