@@ -5,6 +5,7 @@ import { OAuth2Client } from 'google-auth-library';
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+
 router.get('/status', (req, res) => {
   console.log(`hi inside /status`);
   if (req.cookies.authToken) {
@@ -25,7 +26,7 @@ router.post('/login', async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    
+
     const user = {
       name: payload.name,
       email: payload.email,
@@ -38,8 +39,8 @@ router.post('/login', async (req, res) => {
 
     res.cookie('authToken', authToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'None',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -48,6 +49,8 @@ router.post('/login', async (req, res) => {
       email: user.email,
       photoURL: user.photoURL
     }), {
+      secure: true,
+      sameSite: 'None',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -69,7 +72,7 @@ router.post('/signup', async (req, res) => {
       password: password,
       photoURL: 'https://th.bing.com/th/id/OIP.MDsL3053XQlxGpo6y5UTEQAAAA?w=188&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7'
     }
-    
+
     const authToken = jwt.sign(user, process.env.JWT_SECRET, {
       expiresIn: '7d',
     })
@@ -87,11 +90,11 @@ router.post('/signup', async (req, res) => {
       photoURL: user.photoURL
     }), {
       maxAge: 7 * 24 * 60 * 60 * 1000,
-    });  
-    
-    res.json({user});
+    });
+
+    res.json({ user });
   }
-  catch(err){
+  catch (err) {
     alert('err while auth/signup: ', err);
   }
 })
