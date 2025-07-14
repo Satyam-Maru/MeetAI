@@ -27,7 +27,9 @@ const RoomPage = () => {
   // Check authentication status on initial load
   const checkAuthStatus = async () => {
     try {
-      const response = await axios.get(`${url}/api/auth/status`);
+      const response = await axios.get(`${url}/api/auth/status`, {
+        withCredentials: true
+      });
       if (response.data.user) {
         console.log(`auth success, username: ${JSON.parse(response.data.user).name}`);
       }else{

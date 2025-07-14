@@ -10,7 +10,9 @@ function Room() {
   const checkAuthStatus = async () => {
     const url = import.meta.env.VITE_PLATFORM == 'dev' ? import.meta.env.VITE_LOCALHOST_URL : import.meta.env.VITE_BACKEND_URL;
     try {
-      const response = await axios.get(`${url}/api/auth/status`);
+      const response = await axios.get(`${url}/api/auth/status`, {
+        withCredentials: true
+      });
       if (response.data.user) {
         alert(`auth success, username: ${JSON.parse(response.data.user).name}`);
       }else{
