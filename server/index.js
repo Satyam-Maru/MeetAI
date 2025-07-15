@@ -8,6 +8,7 @@ import { loadFilter } from './micro_services/bloom-filter.js';
 import authRoutes from './routes/authRoutes.js';
 import tokenRoutes from './routes/tokenRoutes.js';
 import webhookRoutes from './routes/webHookRoutes.js';
+import { verifyToken } from './middleware/verifyToken.js';
 
 dotenv.config();
 
@@ -22,7 +23,7 @@ async function initializeBloom() {
 await initializeBloom();
 
 app.use(cookieParser());
-const origin = process.env.PLATFORM == 'dev'? process.env.VITE_LOCALHOST : process.env.VERCEL_URL;
+const origin = process.env.PLATFORM == 'dev' ? process.env.VITE_LOCALHOST : process.env.VERCEL_URL;
 app.use(cors({ credentials: true, origin: origin }));
 app.use(express.json());
 
@@ -31,10 +32,12 @@ app.use('/api/auth', authRoutes);
 app.use('/get-token', tokenRoutes(redis, bloomFilter));
 app.use('/livekit-webhook', webhookRoutes(redis));
 
-app.post('/test', (req, res) => {
-  console.log('✅ Test webhook hit!');
-  res.sendStatus(200);
+// middleware for stale ui controlling
+app.use((req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
 });
+
 
 app.get('/', (req, res) => {
   res.send('✅ LiveKit + Bloom Filter + MongoDB Atlas working');

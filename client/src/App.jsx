@@ -5,21 +5,36 @@ import Home from "./pages/Home";
 import Room from "./pages/Room";
 import "./App.css";
 import RoomPage from "./pages/RoomPage";
-import PageNotFound from './pages/PageNotFound';
+import PageNotFound from "./pages/PageNotFound";
+import ProtectedRoute from "./routes/ProtectedRoutes";
 
 const App = () => {
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <AuthProvider>
-        <Router>
+      <Router>
+        <AuthProvider>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/room/:roomName" element={<RoomPage />} />
-            <Route path="/roompage" element={<Room />} />
+            <Route
+              path="/room/:roomName"
+              element={
+                <ProtectedRoute>
+                  <RoomPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/roompage"
+              element={
+                <ProtectedRoute>
+                  <Room />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
-        </Router>
-      </AuthProvider>
+        </AuthProvider>
+      </Router>
     </GoogleOAuthProvider>
   );
 };

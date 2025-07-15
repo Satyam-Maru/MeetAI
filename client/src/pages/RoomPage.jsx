@@ -24,26 +24,18 @@ const RoomPage = () => {
   const navigate = useNavigate();
   const url = import.meta.env.VITE_PLATFORM == 'dev' ? import.meta.env.VITE_LOCALHOST_URL : import.meta.env.VITE_BACKEND_URL;
 
-  // Check authentication status on initial load
-  const checkAuthStatus = async () => {
+  const fetchUser = async () => {
     try {
-      const response = await axios.get(`${url}/api/auth/status`, {
-        withCredentials: true
+      const res = await axios.get(`${url}/api/auth/profile`, {
+        withCredentials: true,
       });
-      if (response.data.user) {
-        console.log(`auth success, username: ${JSON.parse(response.data.user).name}`);
-      }else{
-        navigate('/', {replace:true})
-      }
-    } catch (error) {
-      // alert("Auth check failed:", error);
-      console.log(error)
-      navigate('/', {replace:true})
+    } catch (error){
+      console.log(`error in room page.jsx line 55: ${error}`)
     }
   };
 
   useEffect(() => {
-    checkAuthStatus();
+    fetchUser();
   }, [navigate]);
 
   useEffect(() => {

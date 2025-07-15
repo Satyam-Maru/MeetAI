@@ -1,11 +1,12 @@
 import express from 'express';
 import { AccessToken } from 'livekit-server-sdk';
 import { saveFilter } from '../micro_services/bloom-filter.js';
+import { verifyToken } from '../middleware/verifyToken.js';
 
 const router = express.Router();
 
 export default (redis, bloomFilter) => {
-  router.post('/', async (req, res) => {
+  router.post('/', verifyToken, async (req, res) => {
     const { roomName, identity, isHost } = req.body;
 
     if (!roomName || !identity) {

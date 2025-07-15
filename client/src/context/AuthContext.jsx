@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
 
 const AuthContext = createContext();
 
@@ -10,31 +11,39 @@ export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [authMode, setAuthMode] = useState("signin"); // 'signin' or 'signup'
+  const [authMode, setAuthMode] = useState("signin");
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
-  const url = import.meta.env.VITE_PLATFORM == 'dev' ? import.meta.env.VITE_LOCALHOST_URL : import.meta.env.VITE_BACKEND_URL;
+  const url = import.meta.env.VITE_PLATFORM === "dev"
+    ? import.meta.env.VITE_LOCALHOST_URL
+    : import.meta.env.VITE_BACKEND_URL;
 
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get(`${url}/api/auth/profile`);
+      console.log(`user authenticated`)
+      setUser(res.data.user);
+      setIsLoggedIn(true);
+    } catch {
+      console.log('not auth')
+      setUser(null);
+      setIsLoggedIn(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Run once on mount
   useEffect(() => {
-    axios
-      .get(`${url}/api/auth/status`, { withCredentials: true })
-      .then((res) => {
-        if (res.data.user) { 
-          setUser(JSON.parse(res.data.user));
-          setIsLoggedIn(true);
-        }
-      })
-      .catch(() => {
-        setUser(null);
-        setIsLoggedIn(false);
-      });
+    fetchUser();
   }, []);
 
   const handleLoginSuccess = async ({ token }) => {
     try {
-      const res = await axios.post(`${url}/api/auth/login`, { token });
-      setUser(res.data.user);
-      setIsLoggedIn(true);
+      await axios.post(`${url}/api/auth/login`, { token });
+      await fetchUser();
       setShowAuthModal(false);
     } catch (err) {
       console.error("Google login failed:", err);
@@ -44,9 +53,8 @@ export const AuthProvider = ({ children }) => {
   const handleEmailLogin = async (isSignUp) => {
     try {
       const endpoint = isSignUp ? "/api/auth/signup" : "/api/auth/login";
-      const res = await axios.post(`${url}${endpoint}`, { email, password });
-      setUser(res.data.user);
-      setIsLoggedIn(true);
+      await axios.post(`${url}${endpoint}`, { email, password });
+      await fetchUser();
       setShowAuthModal(false);
     } catch (err) {
       console.error(`${isSignUp ? "Signup" : "Login"} failed:`, err);
@@ -54,15 +62,21 @@ export const AuthProvider = ({ children }) => {
   };
 
   const handleLogout = async () => {
-    await axios.post(`${url}/api/auth/logout`);
-    setUser(null);
-    setIsLoggedIn(false);
-    window.location.href = "/";
+    try {
+      const res = await axios.post(`${url}/api/auth/logout`);
+      console.log(`logout message: ${res.data.message}`);
+    } catch (err) {
+      console.error("Logout failed:", err);
+    } finally {
+      setUser(null);
+      setIsLoggedIn(false);
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
+        loading,
         user,
         isLoggedIn,
         email,

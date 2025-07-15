@@ -1,24 +1,18 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
+import { verifyToken } from '../middleware/verifyToken.js';
 
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-
-router.get('/status', (req, res) => {
-  console.log(`hi inside /status`);
-  if (req.cookies.authToken) {
-    return res.json({ user: req.cookies.user || null });
-  }
-  res.status(401).json({ error: 'Unauthorized' });
+router.get('/profile', verifyToken, (req, res) => {
+  res.json({ user: req.user });
 });
 
 router.post('/login', async (req, res) => {
   try {
     const { token } = req.body;
-
-    console.log(`hi inside /login`);
 
     const ticket = await client.verifyIdToken({
       idToken: token,
@@ -34,14 +28,14 @@ router.post('/login', async (req, res) => {
     };
 
     const authToken = jwt.sign(user, process.env.JWT_SECRET, {
-      expiresIn: '7d',
+      expiresIn: '1d',
     });
 
     res.cookie('authToken', authToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'None',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.cookie('user', JSON.stringify({
@@ -51,7 +45,7 @@ router.post('/login', async (req, res) => {
     }), {
       secure: true,
       sameSite: 'None',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.json({ user });
@@ -65,8 +59,6 @@ router.post('/signup', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    console.log(`hi inside /signup`);
-
     const user = {
       name: email.split('@')[0],
       password: password,
@@ -74,14 +66,14 @@ router.post('/signup', async (req, res) => {
     }
 
     const authToken = jwt.sign(user, process.env.JWT_SECRET, {
-      expiresIn: '7d',
+      expiresIn: '1d',
     })
 
     res.cookie('authToken', authToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'None',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.cookie('user', JSON.stringify({
@@ -91,7 +83,7 @@ router.post('/signup', async (req, res) => {
     }), {
       secure: true,
       sameSite: 'None',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.json({ user });
@@ -102,7 +94,7 @@ router.post('/signup', async (req, res) => {
 })
 
 router.post('/logout', (req, res) => {
-  console.log(`hi inside /logout`);
+
   res.clearCookie('authToken', {
     httpOnly: true,
     secure: true,
