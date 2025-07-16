@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Modal from "react-modal";
 import AuthButtons from "../components/AuthButtons";
 import RoomControls from "../components/RoomControls";
 import VideoPlaceholder from "../components/VideoPlaceholder";
 import { useAuth } from "../context/AuthContext";
+import { useLocation } from "react-router-dom";
 import '../styles/Home.css';
 
 Modal.setAppElement('#root');
@@ -24,6 +25,16 @@ const Home = () => {
     handleLoginSuccess,
     handleLogout,
   } = useAuth();
+  const location = useLocation();
+
+  useEffect(() => {
+    const from = location.state?.from?.pathname;
+    if (!isLoggedIn && from && from !== "/") {
+      setAuthMode("signup");
+      setShowAuthModal(true);
+    }
+  }, [location.state, setAuthMode, setShowAuthModal, isLoggedIn]);
+
 
   return (
     <div className="app-container">
@@ -59,8 +70,17 @@ const Home = () => {
       <Modal
         isOpen={showAuthModal}
         onRequestClose={() => setShowAuthModal(false)}
-        className="auth-modal"
-        overlayClassName="auth-modal-overlay"
+        className={{
+          base: 'auth-modal',
+          afterOpen: 'auth-modal--after-open',
+          beforeClose: 'auth-modal--before-close'
+        }}
+        overlayClassName={{
+          base: 'auth-modal-overlay',
+          afterOpen: 'auth-modal-overlay--after-open',
+          beforeClose: 'auth-modal-overlay--before-close'
+        }}
+        closeTimeoutMS={300}
       >
         <div className="auth-modal-header">
           <h2>
