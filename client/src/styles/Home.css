@@ -204,3 +204,65 @@
 .close-button:hover svg path {
   stroke: white;
 }
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;  
+}
+
+/* Add this new style for the error message */
+.auth-error {
+  color: #e53e3e; /* A reddish error color */
+  background-color: #fed7d7; /* A light red background */
+  border: 1px solid #f56565;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 14px;
+  text-align: center;
+  margin: 0 0 10px 0; /* Margin only at the bottom */
+}
+
+.auth-form input {
+  padding: 12px;
+  border: 1px solid black;
+  border-radius: 4px;
+  font-size: 16px;
+  box-sizing: border-box; /* Add this to ensure padding is included in width */
+}
+
+/* Add these new styles */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 45px; /* Make space for the icon */
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0%;
+  background-color: #ffffff !important;
+  border: 1px solid black !important;
+  border-radius: 50%;
+  height: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+/* Target the SVG icon directly */
+.password-toggle-btn svg {
+  stroke: #000; /* Directly set the icon color to black */
+}
+
+.password-toggle-btn:hover {
+  background-color: whitesmoke !important;
+}
