@@ -61,7 +61,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const handleEmailLogin = async (isSignUp) => {
-    // Basic email regex for validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!email || !password) {
@@ -107,6 +106,8 @@ export const AuthProvider = ({ children }) => {
 
   const openAuthModal = (mode) => {
     setAuthError("");
+    setEmail(""); // Clear email on open
+    setPassword(""); // Clear password on open
     setAuthMode(mode);
     setShowAuthModal(true);
   };
