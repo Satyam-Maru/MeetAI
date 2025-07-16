@@ -14,6 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [authMode, setAuthMode] = useState("signin");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -41,13 +42,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Run once on mount
   useEffect(() => {
     fetchUser();
   }, []);
 
   const handleLoginSuccess = async ({ token }) => {
     try {
+      setAuthError("");
       await axios.post(`${url}/api/auth/login`, { token });
       await fetchUser();
       setShowAuthModal(false);
@@ -55,11 +56,27 @@ export const AuthProvider = ({ children }) => {
       navigate(from, { replace: true });
     } catch (err) {
       console.error("Google login failed:", err);
+      setAuthError("Google login failed. Please try again.");
     }
   };
 
   const handleEmailLogin = async (isSignUp) => {
+    // Basic email regex for validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email || !password) {
+      setAuthError("Email and password are required.");
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      setAuthError("Please enter a valid email address.");
+      return;
+    }
+
+
     try {
+      setAuthError("");
       const endpoint = isSignUp ? "/api/auth/signup" : "/api/auth/signin";
       await axios.post(`${url}${endpoint}`, { email, password });
       await fetchUser();
@@ -67,6 +84,11 @@ export const AuthProvider = ({ children }) => {
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     } catch (err) {
+      if (err.response && err.response.data && err.response.data.error) {
+        setAuthError(err.response.data.error);
+      } else {
+        setAuthError("An unexpected error occurred. Please try again.");
+      }
       console.error(`${isSignUp ? "Signup" : "Login"} failed:`, err);
     }
   };
@@ -83,6 +105,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const openAuthModal = (mode) => {
+    setAuthError("");
+    setAuthMode(mode);
+    setShowAuthModal(true);
+  };
+
+
   if (loading) {
     return <div className="loading-screen">Loading...</div>;
   }
@@ -97,13 +126,16 @@ export const AuthProvider = ({ children }) => {
         password,
         authMode,
         showAuthModal,
+        authError,
         setEmail,
         setPassword,
         setAuthMode,
         setShowAuthModal,
+        setAuthError,
         handleEmailLogin,
         handleLoginSuccess,
         handleLogout,
+        openAuthModal,
       }}
     >
       {children}
