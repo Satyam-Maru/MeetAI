@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
 
@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const url =
     import.meta.env.VITE_PLATFORM === "dev"
@@ -50,6 +51,8 @@ export const AuthProvider = ({ children }) => {
       await axios.post(`${url}/api/auth/login`, { token });
       await fetchUser();
       setShowAuthModal(false);
+      const from = location.state?.from?.pathname || "/";
+      navigate(from, { replace: true });
     } catch (err) {
       console.error("Google login failed:", err);
     }
@@ -61,6 +64,8 @@ export const AuthProvider = ({ children }) => {
       await axios.post(`${url}${endpoint}`, { email, password });
       await fetchUser();
       setShowAuthModal(false);
+      const from = location.state?.from?.pathname || "/";
+      navigate(from, { replace: true });
     } catch (err) {
       console.error(`${isSignUp ? "Signup" : "Login"} failed:`, err);
     }
