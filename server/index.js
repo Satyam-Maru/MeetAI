@@ -16,7 +16,7 @@ const app = express();
 const redis = new Redis(process.env.REDIS_URL, { tls: {} });
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGO_ATLAS_URI)
+mongoose.connect(process.env.MONGO_ATLAS_URI, {dbName: process.env.MONGO_DB_NAME})
 .then(() => console.log('✅ MongoDB connected'))
 .catch(err => console.error('❌ MongoDB connection error:', err));
 
