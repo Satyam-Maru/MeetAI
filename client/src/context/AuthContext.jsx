@@ -16,18 +16,23 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const location = useLocation();
 
-  const url = import.meta.env.VITE_PLATFORM === "dev"
-    ? import.meta.env.VITE_LOCALHOST_URL
-    : import.meta.env.VITE_BACKEND_URL;
+  const url =
+    import.meta.env.VITE_PLATFORM === "dev"
+      ? import.meta.env.VITE_LOCALHOST_URL
+      : import.meta.env.VITE_BACKEND_URL;
 
   const fetchUser = async () => {
     try {
       const res = await axios.get(`${url}/api/auth/profile`);
-      console.log(`user authenticated`)
+      console.log("auth success");
       setUser(res.data.user);
       setIsLoggedIn(true);
-    } catch {
-      console.log('not auth')
+    } catch (error) {
+      if (error.response && error.response.status === 401) {
+        console.log("No auth cookie set — user not logged in");
+      } else {
+        console.error("Some other error occurred:", error);
+      }
       setUser(null);
       setIsLoggedIn(false);
     } finally {
@@ -72,6 +77,10 @@ export const AuthProvider = ({ children }) => {
       setIsLoggedIn(false);
     }
   };
+
+  if (loading) {
+    return <div className="loading-screen">Loading...</div>;
+  }
 
   return (
     <AuthContext.Provider

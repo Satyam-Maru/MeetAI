@@ -9,7 +9,7 @@ const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 router.get('/profile', verifyToken, (req, res) => {
-  res.json({ user: req.user });
+  res.json({ user: req.user, success: true });
 });
 
 router.post('/login', async (req, res) => {

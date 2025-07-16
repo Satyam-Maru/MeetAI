@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 function verifyToken(req, res, next) {
     const token = req.cookies.authToken;
-    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+    if (!token) return res.status(401).json({ message: 'Unauthorized', success: false });
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -10,7 +10,7 @@ function verifyToken(req, res, next) {
         next();
     } catch (err) {
         console.log(`err: ${err}`)
-        res.status(403).json({ message: 'Forbidden' });
+        res.status(403).json({ message: 'Forbidden', success: false });
     }
 }
 
