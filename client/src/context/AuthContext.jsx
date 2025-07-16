@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
 
   const handleEmailLogin = async (isSignUp) => {
     try {
-      const endpoint = isSignUp ? "/api/auth/signup" : "/api/auth/login";
+      const endpoint = isSignUp ? "/api/auth/signup" : "/api/auth/signin";
       await axios.post(`${url}${endpoint}`, { email, password });
       await fetchUser();
       setShowAuthModal(false);
