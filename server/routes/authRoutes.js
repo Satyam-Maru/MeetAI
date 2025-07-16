@@ -2,6 +2,8 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { verifyToken } from '../middleware/verifyToken.js';
+import bcrypt from 'bcryptjs';
+import User from '../models/User.js'
 
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -24,28 +26,22 @@ router.post('/login', async (req, res) => {
     const user = {
       name: payload.name,
       email: payload.email,
+      password: "",
+      isGoogleUser: true,
       photoURL: payload.picture,
     };
 
+    await new User(user).save();
+
     const authToken = jwt.sign(user, process.env.JWT_SECRET, {
-      expiresIn: '1d',
+      expiresIn: '3d',
     });
 
     res.cookie('authToken', authToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'None',
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-    res.cookie('user', JSON.stringify({
-      name: user.name,
-      email: user.email,
-      photoURL: user.photoURL
-    }), {
-      secure: true,
-      sameSite: 'None',
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 3 * 24 * 60 * 60 * 1000,
     });
 
     res.json({ user });
@@ -59,37 +55,92 @@ router.post('/signup', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = {
-      name: email.split('@')[0],
-      password: password,
-      photoURL: 'https://th.bing.com/th/id/OIP.MDsL3053XQlxGpo6y5UTEQAAAA?w=188&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7'
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' })
     }
 
-    const authToken = jwt.sign(user, process.env.JWT_SECRET, {
-      expiresIn: '1d',
-    })
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    res.cookie('authToken', authToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'None',
-      maxAge: 24 * 60 * 60 * 1000,
+    const assignInitialPFP = (username) => {
+      const initial = username[0].toUpperCase();
+      return `${process.env.CLOUDINARY_URL}/${initial}.png`;
+    };
+
+    const photoURL = assignInitialPFP(email.split('@')[0]); 
+
+    const user = new User({
+      name: email.split('@')[0],
+      email,
+      password: hashedPassword,
+      isGoogleUser: false,
+      photoURL
     });
 
-    res.cookie('user', JSON.stringify({
-      name: user.name,
-      email: user.email,
-      photoURL: user.photoURL
-    }), {
-      secure: true,
-      sameSite: 'None',
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+    await user.save(); // saved to MongoDB
+
+    const authToken = jwt.sign(
+      {
+        name: email.split('@')[0],
+        email, photoURL
+      },
+      process.env.JWT_SECRET, { expiresIn: '3d' });
+
+    res.cookie('authToken', authToken, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 3 * 24 * 60 * 60 * 1000 });
 
     res.json({ user });
   }
   catch (err) {
-    alert('err while auth/signup: ', err);
+    console.log('err while auth/signup: ', err);
+  }
+})
+
+router.post('/signin', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const redis = req.app.get('redis');
+
+    // Check Redis cache first
+    const cachedUser = await redis.get(`user:${email}`);
+    if (cachedUser) {
+      const user = JSON.parse(cachedUser);
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (isMatch) {
+        const authToken = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '3d' });
+        res.cookie('authToken', authToken, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 3 * 24 * 60 * 60 * 1000 });
+        return res.json({ user });
+      }
+    }
+
+    // If not in cache, check the database MongoDB
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
+
+    // Cache the user data in Redis
+    await redis.set(`user:${email}`, JSON.stringify(user), 'EX', 3 * 24 * 60 * 60);
+
+    const authToken = jwt.sign({
+      name: email.split('@')[0],
+      email, photoURL: user.photoURL
+    },
+      process.env.JWT_SECRET, { expiresIn: '3d' }
+    );
+    
+    res.cookie('authToken', authToken, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 3 * 24 * 60 * 60 * 1000 });
+    res.json({ user });
+
+  } catch (err) {
+    console.error('Error during signin:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 })
 
@@ -101,10 +152,6 @@ router.post('/logout', (req, res) => {
     sameSite: 'None'
   });
 
-  res.clearCookie('user', {
-    secure: true,
-    sameSite: 'None'
-  });
   res.json({ message: 'Logged out' });
 });
 
