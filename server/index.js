@@ -3,17 +3,22 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import Redis from 'ioredis';
 import cookieParser from 'cookie-parser';
+import mongoose from 'mongoose';
 
 import { loadFilter } from './micro_services/bloom-filter.js';
 import authRoutes from './routes/authRoutes.js';
 import tokenRoutes from './routes/tokenRoutes.js';
 import webhookRoutes from './routes/webHookRoutes.js';
-import { verifyToken } from './middleware/verifyToken.js';
 
 dotenv.config();
 
 const app = express();
 const redis = new Redis(process.env.REDIS_URL, { tls: {} });
+
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_ATLAS_URI)
+.then(() => console.log('✅ MongoDB connected'))
+.catch(err => console.error('❌ MongoDB connection error:', err));
 
 let bloomFilter = null;
 async function initializeBloom() {
@@ -27,17 +32,13 @@ const origin = process.env.PLATFORM == 'dev' ? process.env.VITE_LOCALHOST : proc
 app.use(cors({ credentials: true, origin: origin }));
 app.use(express.json());
 
+// Pass Redis client to routes
+app.set('redis', redis);
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/get-token', tokenRoutes(redis, bloomFilter));
 app.use('/livekit-webhook', webhookRoutes(redis));
-
-// middleware for stale ui controlling
-app.use((req, res, next) => {
-  res.setHeader("Cache-Control", "no-store");
-  next();
-});
-
 
 app.get('/', (req, res) => {
   res.send('✅ LiveKit + Bloom Filter + MongoDB Atlas working');
