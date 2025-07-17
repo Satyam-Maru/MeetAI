@@ -104,14 +104,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const openAuthModal = (mode) => {
-    setAuthError("");
-    setEmail(""); // Clear email on open
-    setPassword(""); // Clear password on open
-    setAuthMode(mode);
-    setShowAuthModal(true);
-  };
-
 
   if (loading) {
     return <div className="loading-screen">Loading...</div>;
@@ -136,7 +128,6 @@ export const AuthProvider = ({ children }) => {
         handleEmailLogin,
         handleLoginSuccess,
         handleLogout,
-        openAuthModal,
       }}
     >
       {children}

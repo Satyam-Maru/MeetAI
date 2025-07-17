@@ -26,7 +26,6 @@ const Home = () => {
     handleEmailLogin,
     handleLoginSuccess,
     handleLogout,
-    openAuthModal,
   } = useAuth();
   const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
@@ -34,9 +33,9 @@ const Home = () => {
   useEffect(() => {
     const from = location.state?.from?.pathname;
     if (!isLoggedIn && from && from !== "/") {
-      openAuthModal("signup");
+      setShowAuthModal(true);
     }
-  }, [location.state, isLoggedIn, openAuthModal]);
+  }, [location.state, isLoggedIn]);
 
   return (
     <div className="app-container">
@@ -49,13 +48,13 @@ const Home = () => {
           <div className="auth-options">
             <button
               className="auth-button"
-              onClick={() => openAuthModal("signup")}
+              onClick={() => setShowAuthModal(true)}
             >
               Sign Up
             </button>
             <button
               className="auth-button"
-              onClick={() => openAuthModal("signin")}
+              onClick={() => setShowAuthModal(true)}
             >
               Sign In
             </button>
@@ -68,6 +67,8 @@ const Home = () => {
         onRequestClose={() => {
           setShowAuthModal(false);
           setShowPassword(false);
+          setEmail('');
+          setPassword('');
         }}
         className={{
           base: "auth-modal",
@@ -89,7 +90,12 @@ const Home = () => {
           </h2>
           <button
             className="close-button"
-            onClick={() => setShowAuthModal(false)}
+            onClick={() => {
+              setShowAuthModal(false);
+              setEmail('');
+              setPassword('');
+              setShowPassword(false);
+            }}
           >
             <svg
               width="14"
