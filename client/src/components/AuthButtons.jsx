@@ -5,6 +5,7 @@ import GoogleLogo from '../assets/google_svg.svg';
 
 const AuthButtons = ({ onSuccess }) => {
   const [googleReady, setGoogleReady] = useState(false);
+  const [showCustomButton, setShowCustomButton] = useState(true);
 
   useEffect(() => {
     const loadGoogleScript = () => {
@@ -34,6 +35,7 @@ const AuthButtons = ({ onSuccess }) => {
         itp_support: true
       });
       setGoogleReady(true);
+      setShowCustomButton(true);
     };
 
     loadGoogleScript();
@@ -42,15 +44,13 @@ const AuthButtons = ({ onSuccess }) => {
   const handleGoogleLogin = () => {
     if (!googleReady) return;
 
-    // Clear previous dismissals
     window.google.accounts.id.cancel();
-    
-    // Store that we initiated the prompt
     localStorage.setItem('google_one_tap_initiated', Date.now());
 
     window.google.accounts.id.prompt(notification => {
       if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
         console.log('Prompt not shown due to:', notification.getNotDisplayedReason());
+        setShowCustomButton(false);
         renderButtonFallback();
       }
     });
@@ -62,7 +62,7 @@ const AuthButtons = ({ onSuccess }) => {
       window.google.accounts.id.renderButton(container, {
         type: 'standard',
         theme: 'outline',
-        size: 'large',
+        size: 'medium',
         text: 'continue_with',
         shape: 'rectangular'
       });
@@ -70,7 +70,6 @@ const AuthButtons = ({ onSuccess }) => {
   };
 
   const handleCredentialResponse = (response) => {
-    // Clear the initiation flag on success
     localStorage.removeItem('google_one_tap_initiated');
     
     const userData = jwtDecode(response.credential);
@@ -82,15 +81,25 @@ const AuthButtons = ({ onSuccess }) => {
         picture: userData.picture
       }
     });
+    setShowCustomButton(true);
   };
+
+  useEffect(() => {
+    if (!showCustomButton) {
+      renderButtonFallback();
+    }
+  }, [showCustomButton]);
 
   return (
     <div className="button-container">
-      <div id="google-button-container"></div>
-      <button onClick={handleGoogleLogin} className="google-signin-button">
-        <img src={GoogleLogo} alt="Google logo" width="20" height="20" />
-        Continue with Google
-      </button>
+      {showCustomButton ? (
+        <button onClick={handleGoogleLogin} className="google-signin-button">
+          <img src={GoogleLogo} alt="Google logo" width="20" height="20" />
+          Continue with Google
+        </button>
+      ) : (
+        <div id="google-button-container"></div>
+      )}
     </div>
   );
 };

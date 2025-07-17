@@ -48,13 +48,19 @@ const Home = () => {
           <div className="auth-options">
             <button
               className="auth-button"
-              onClick={() => setShowAuthModal(true)}
+              onClick={() => {
+                setAuthMode('signup');
+                setShowAuthModal(true);
+              }}
             >
               Sign Up
             </button>
             <button
               className="auth-button"
-              onClick={() => setShowAuthModal(true)}
+              onClick={() => {
+                setAuthMode('signin');
+                setShowAuthModal(true);
+              }}
             >
               Sign In
             </button>

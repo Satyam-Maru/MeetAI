@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { verifyToken } from '../middleware/verifyToken.js';
 import bcrypt from 'bcryptjs';
-import User from '../models/User.js'
+import User from '../models/User.js';
 
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -23,19 +23,33 @@ router.post('/login', async (req, res) => {
 
     const payload = ticket.getPayload();
 
-    const user = {
+    const userData = {
       name: payload.name,
       email: payload.email,
-      password: "",
+      password: "", // Not used for Google users
       isGoogleUser: true,
       photoURL: payload.picture,
     };
 
-    await new User(user).save();
+    // Use findOneAndUpdate with upsert to create or update the user
+    const user = await User.findOneAndUpdate(
+      { email: payload.email }, // find a document with this filter
+      { $set: userData }, // document to insert when nothing is found
+      { new: true, upsert: true, setDefaultsOnInsert: true } // options
+    );
 
-    const authToken = jwt.sign(user, process.env.JWT_SECRET, {
-      expiresIn: '3d',
-    });
+    const authToken = jwt.sign(
+      {
+        _id: user._id, // It's good practice to use the user's ID
+        name: user.name,
+        email: user.email,
+        photoURL: user.photoURL,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: '3d',
+      }
+    );
 
     res.cookie('authToken', authToken, {
       httpOnly: true,
@@ -154,5 +168,6 @@ router.post('/logout', (req, res) => {
 
   res.json({ message: 'Logged out' });
 });
+
 
 export default router;
