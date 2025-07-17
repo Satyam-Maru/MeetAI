@@ -16,6 +16,8 @@ export default (redis) => {
       try {
         const authHeader = req.get('Authorization');
         const event = await receiver.receive(req.body, authHeader);
+        
+        res.sendStatus(200); // to quickly notify the server, so it can process the req
 
         const { event: eventType, room, participant } = event;
         const hostIdentity = await redis.get(`livekit:host:${room?.name}`);
@@ -36,7 +38,6 @@ export default (redis) => {
           console.log(`🧹 Room "${room?.name}" removed from Redis (host left)`);
         }
 
-        res.sendStatus(200);
       } catch (err) {
         console.error('❌ Webhook validation failed:', err.message);
         console.log('Authorization Header:', req.get('Authorization'));
