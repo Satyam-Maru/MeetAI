@@ -7,7 +7,7 @@ html, body {
 }
 
 body {
-  background: url("bg-2.jpg") no-repeat center center fixed;
+  background: url("./assets/bg-2.jpg") no-repeat center center fixed;
   background-color: rgb(245, 236, 236);
   background-size: cover;
   position: relative;
