@@ -3,6 +3,7 @@ import "../styles/RoomControls.css";
 import Dice from "../assets/dice-svg.svg";
 import Modal from "react-modal";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 Modal.setAppElement("#root");
 
@@ -29,6 +30,8 @@ const RoomControls = ({ onLogout, user }) => {
     "Infinity",
   ];
 
+  const url = import.meta.env.VITE_PLATFORM == 'dev' ? import.meta.env.VITE_LOCALHOST_URL : import.meta.env.VITE_BACKEND_URL;
+
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
     if (bridgeRef.current) {
@@ -51,15 +54,28 @@ const RoomControls = ({ onLogout, user }) => {
     setError("");
   };
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = async () => {
     if (!roomName.trim()) {
       setError("Room name cannot be empty");
       return;
     }
     // Here you would typically call an API to create the room
     console.log("Creating room:", roomName);
-    navigate(`/room/${roomName}?host=true&identity=${user.name}`);
-    setShowCreateModal(false);
+    // navigate(`/room/${roomName}?host=true&identity=${user.name}`);
+    try{
+      const roomData = await axios.post(`${url}/check-room`, {room_name: roomName})
+      console.log(`data from server: ${roomData.data.msg}`)
+      if(roomData.data.msg == 'failure') {
+        setError('Room already exists')
+      }else{
+        setError('')
+      }
+    }
+    catch (err){
+      setError(err.message)
+      console.log(`err in handleCreateRoom: ${err.message}`)
+    }
+    // setShowCreateModal(false);
     setRoomName("");
   };
 
