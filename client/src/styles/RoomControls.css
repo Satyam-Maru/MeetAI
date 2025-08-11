@@ -261,7 +261,6 @@
   align-items: center;
   padding: 1.5rem;
   background-color: #1e1e1e;
-  border-bottom: 1px solid #444;
 }
 
 .modal-header h2 {
@@ -404,7 +403,6 @@ input:-webkit-autofill:active {
 .modal-footer {
   padding: 1rem 1.5rem;
   background-color: #1e1e1e;
-  border-top: 1px solid #444;
   display: flex;
   justify-content: center;
 }

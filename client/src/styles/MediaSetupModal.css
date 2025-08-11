@@ -1,0 +1,253 @@
+/* --- Overlay --- */
+.media-setup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transition: opacity 200ms ease-in-out;
+}
+
+.media-setup-overlay--after-open {
+  opacity: 1;
+}
+
+.media-setup-overlay--before-close {
+  opacity: 0;
+}
+
+/* --- Modal --- */
+.media-setup-modal {
+  background-color: #202124;
+  border-radius: 16px;
+  padding: 24px 32px;
+  width: 90%;
+  max-width: 600px;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 200ms ease-in-out, transform 200ms ease-in-out;
+}
+
+.media-setup-modal--after-open {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.media-setup-modal--before-close {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+/* --- Header --- */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.75rem;
+  color: #e8eaed;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #9aa0a6;
+  cursor: pointer;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.close-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* --- Body --- */
+.modal-body {
+    margin-bottom: 24px;
+}
+
+.video-preview-container {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.video-preview-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.video-disabled-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #303134;
+}
+
+.video-disabled-container svg {
+    stroke: #5f6368;
+}
+
+/* --- Footer & Controls --- */
+.modal-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.control-button-group {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.control-button {
+  background-color: #3c4043;
+  color: #e8eaed;
+  border: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.control-button:hover {
+  background-color: #4a4e52;
+}
+
+.control-button:active {
+  transform: scale(0.95);
+}
+
+.control-button.off {
+  background-color: #ea4335;
+  color: white;
+}
+
+.control-button.off:hover {
+  background-color: #d93025;
+}
+
+.control-button svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.join-button {
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+  padding: 0 32px;
+  height: 48px;
+  border-radius: 24px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.join-button:hover {
+  background-color: #287ae6;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.join-button:disabled {
+  background-color: #3c4043;
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+/* --- Error State --- */
+.error-message-container {
+  padding: 20px;
+  text-align: center;
+  color: #bdc1c6;
+}
+
+.error-message {
+  color: #f28b82;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+/* --- Media Queries for Responsiveness --- */
+@media (max-width: 640px) {
+  .media-setup-modal {
+    padding: 20px;
+  }
+
+  .modal-title {
+    font-size: 1.5rem;
+  }
+
+  .modal-body {
+    margin-bottom: 20px;
+  }
+
+  .modal-footer {
+    gap: 12px;
+  }
+
+  .join-button {
+    padding: 0 24px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-title {
+    font-size: 1.25rem;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+    align-items: stretch; /* Make buttons full width */
+    gap: 16px;
+  }
+
+  .join-button {
+    width: 100%; /* Make join button full width */
+  }
+}

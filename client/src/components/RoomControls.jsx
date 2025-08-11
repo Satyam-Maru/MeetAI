@@ -4,6 +4,7 @@ import Dice from "../assets/dice-svg.svg";
 import Modal from "react-modal";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import MediaSetupModal from "./MediaSetupModal"; // Import the new component
 
 Modal.setAppElement("#root");
 
@@ -16,6 +17,7 @@ const RoomControls = ({ onLogout, user }) => {
   const bridgeRef = useRef(null);
   const [isJoined, setIsJoined] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showMediaSetup, setShowMediaSetup] = useState(false);
 
   const predefinedNames = [
     "Cosmic",
@@ -69,6 +71,7 @@ const RoomControls = ({ onLogout, user }) => {
         setError('Room already exists')
       }else{
         setError('')
+        setShowMediaSetup(true);
       }
     }
     catch (err){
@@ -76,11 +79,20 @@ const RoomControls = ({ onLogout, user }) => {
       console.log(`err in handleCreateRoom: ${err.message}`)
     }
     // setShowCreateModal(false);
-    setRoomName("");
   };
 
   const joinRoom = () => {
     setIsJoined(true);
+    setShowMediaSetup(true);
+  };
+  
+  const handleJoin = (mediaSettings) => {
+    console.log("Joining room with settings:", mediaSettings);
+    // if (inputValue.trim()) {
+    //   navigate(`/room/${inputValue.trim()}?identity=${user.name}&mic=${mediaSettings.micOn}&video=${mediaSettings.cameraOn}`);
+    // } else if (roomName.trim()) {
+    //   navigate(`/room/${roomName}?host=true&identity=${user.name}&mic=${mediaSettings.micOn}&video=${mediaSettings.cameraOn}`);
+    // }
   };
 
   return (
@@ -187,6 +199,11 @@ const RoomControls = ({ onLogout, user }) => {
           </button>
         </div>
       </div>
+      <MediaSetupModal
+        isOpen={showMediaSetup}
+        onRequestClose={() => setShowMediaSetup(false)}
+        onJoin={handleJoin}
+      />
 
       {/* Create Room Modal */}
       {showCreateModal && (
