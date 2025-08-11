@@ -302,13 +302,17 @@
   padding: 1.5rem;
 }
 
-.input-group {
-  margin-bottom: 1rem;
-}
-
 .input-wrapper {
   position: relative;
   display: flex;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #333 inset !important;
+    -webkit-text-fill-color: white !important;
 }
 
 .input-wrapper input {
@@ -392,8 +396,9 @@
 
 .error-message {
   color: #ff6b6b;
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
+  margin-top: 1.5rem;
+  font-size: 1.2rem;
+  text-align: center;
 }
 
 .modal-footer {

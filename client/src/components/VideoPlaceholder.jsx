@@ -12,6 +12,7 @@ const VideoPlaceholder = () => {
         autoPlay
         muted
         playsInline
+        disablePictureInPicture
       >
         <source src={LandingPageVideoWebm} type="video/webm" />
         <source src={LandingPageVideoMp4} type="video/mp4" />

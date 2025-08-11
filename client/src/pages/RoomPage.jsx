@@ -30,7 +30,7 @@ const RoomPage = () => {
         withCredentials: true,
       });
     } catch (error){
-      console.log(`error in room page.jsx line 55: ${error}`)
+      console.log(`error in room page.jsx: ${error}`)
     }
   };
 
