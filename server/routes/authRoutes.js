@@ -27,6 +27,14 @@ router.post('/login', async (req, res) => {
     });
     const payload = ticket.getPayload();
 
+    // --- FIX STARTS HERE ---
+    // Add a check to ensure the payload from Google is valid
+    if (!payload || !payload.email) {
+      console.error('Google auth error: Invalid payload from token');
+      return res.status(401).json({ error: 'Authentication failed: Invalid token payload' });
+    }
+    // --- FIX ENDS HERE ---
+
     const userData = {
       name: payload.name,
       email: payload.email,

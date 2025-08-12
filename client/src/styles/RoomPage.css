@@ -9,21 +9,22 @@
 
 .room-page-container {
   display: flex;
-  flex-direction: column; /* Stack children vertically */
-  height: 100vh;
+  flex-direction: column;
+  height: 100vh; /* Fallback for older browsers */
+  height: 100dvh; /* Best for mobile */
   width: 100vw;
   background-color: var(--background-color);
   color: var(--on-surface-color);
-  overflow: hidden; /* This is fine here to prevent the page itself from scrolling */
+  overflow: hidden;
 }
 
 .main-content {
-  flex-grow: 1; /* Allow this section to grow */
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Hide overflow within this section */
   transition: width 0.3s ease-in-out;
   width: 100%;
+  min-height: 0; /* Important flexbox fix */
 }
 
 .main-content.chat-open {
@@ -35,7 +36,7 @@
   display: grid;
   gap: 8px;
   padding: 8px;
-  overflow: auto;
+  overflow: hidden; /* No scrollbars allowed */
   align-content: center;
   justify-content: center;
 }
@@ -91,7 +92,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 24px;
-  flex-shrink: 0; /* Prevent the footer from shrinking */
+  flex-shrink: 0;
 }
 
 .footer-info {
