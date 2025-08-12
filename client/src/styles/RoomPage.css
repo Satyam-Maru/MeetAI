@@ -9,17 +9,19 @@
 
 .room-page-container {
   display: flex;
+  flex-direction: column; /* Stack children vertically */
   height: 100vh;
   width: 100vw;
   background-color: var(--background-color);
   color: var(--on-surface-color);
-  overflow: hidden;
+  overflow: hidden; /* This is fine here to prevent the page itself from scrolling */
 }
 
 .main-content {
-  flex-grow: 1;
+  flex-grow: 1; /* Allow this section to grow */
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* Hide overflow within this section */
   transition: width 0.3s ease-in-out;
   width: 100%;
 }
@@ -89,7 +91,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 24px;
-  flex-shrink: 0;
+  flex-shrink: 0; /* Prevent the footer from shrinking */
 }
 
 .footer-info {
