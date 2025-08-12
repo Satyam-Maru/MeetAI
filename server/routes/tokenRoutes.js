@@ -17,7 +17,7 @@ export default (redis, bloomFilter) => {
       const token = new AccessToken(
         process.env.LIVEKIT_API_KEY,
         process.env.LIVEKIT_API_SECRET,
-        { identity }
+        { identity, name: identity }
       );
 
       token.addGrant({

@@ -1,3 +1,4 @@
+// client/src/pages/RoomPage.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
@@ -16,11 +17,14 @@ const RoomPage = () => {
   const { user } = useAuth();
   const [token, setToken] = useState(null);
 
-  const url = import.meta.env.VITE_PLATFORM === 'dev' ? import.meta.env.VITE_LOCALHOST_URL : import.meta.env.VITE_BACKEND_URL;
+  const url = import.meta.env.VITE_PLATFORM === 'dev' 
+    ? import.meta.env.VITE_LOCALHOST_URL 
+    : import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
     const fetchToken = async () => {
-      const identity = user?.name || "Guest";
+      if (!user) return;
+      const identity = user.name || "Guest";
       const isHost = searchParams.get("host") === "true";
       try {
         const res = await axios.post(`${url}/get-token`, { roomName, identity, isHost });
@@ -30,9 +34,7 @@ const RoomPage = () => {
         navigate("/");
       }
     };
-    if (user) {
-      fetchToken();
-    }
+    fetchToken();
   }, [roomName, navigate, url, user, searchParams]);
 
   const handleEndCall = () => {
@@ -53,6 +55,7 @@ const RoomPage = () => {
         video={searchParams.get("video") !== "false"}
         onDisconnected={handleEndCall}
       >
+        {/* The standard VideoConference component includes a chat with sender names */}
         <VideoConference />
       </LiveKitRoom>
     </div>
