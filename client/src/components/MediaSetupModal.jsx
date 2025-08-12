@@ -107,14 +107,38 @@ const MediaSetupModal = ({ isOpen, onRequestClose, onJoin }) => {
     }
   };
 
-  const toggleCamera = () => {
-    if (streamRef.current) {
-      const newCameraState = !cameraOn;
-      streamRef.current
-        .getVideoTracks()
-        .forEach((track) => (track.enabled = newCameraState));
-      setCameraOn(newCameraState);
-    }
+  const toggleCamera = async () => {
+    setCameraOn(prevCameraOn => {
+      const newCameraState = !prevCameraOn;
+      if (streamRef.current) {
+        if (newCameraState) {
+          // Turning camera ON
+          navigator.mediaDevices.getUserMedia({ video: true })
+            .then(videoStream => {
+              const videoTrack = videoStream.getVideoTracks()[0];
+              const audioTracks = streamRef.current.getAudioTracks();
+              streamRef.current.getVideoTracks().forEach(track => track.stop()); // Stop existing video tracks
+              const newStream = new MediaStream([...audioTracks, videoTrack]);
+              streamRef.current = newStream;
+              if (videoRef.current) {
+                videoRef.current.srcObject = newStream;
+              }
+            })
+            .catch(err => {
+              console.error("Failed to get video track", err);
+              setError("Could not access your camera.");
+              setCameraOn(false); // Revert state on error
+            });
+        } else {
+          // Turning camera OFF
+          streamRef.current.getVideoTracks().forEach(track => {
+            track.stop();
+            streamRef.current.removeTrack(track);
+          });
+        }
+      }
+      return newCameraState;
+    });
   };
 
   const handleJoin = () => {

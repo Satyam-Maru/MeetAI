@@ -88,11 +88,11 @@ const RoomControls = ({ onLogout, user }) => {
   
   const handleJoin = (mediaSettings) => {
     console.log("Joining room with settings:", mediaSettings);
-    // if (inputValue.trim()) {
-    //   navigate(`/room/${inputValue.trim()}?identity=${user.name}&mic=${mediaSettings.micOn}&video=${mediaSettings.cameraOn}`);
-    // } else if (roomName.trim()) {
-    //   navigate(`/room/${roomName}?host=true&identity=${user.name}&mic=${mediaSettings.micOn}&video=${mediaSettings.cameraOn}`);
-    // }
+    if (inputValue.trim()) {
+      navigate(`/room/${inputValue.trim()}?identity=${user.name}&mic=${mediaSettings.micOn}&video=${mediaSettings.cameraOn}`);
+    } else if (roomName.trim()) {
+      navigate(`/room/${roomName}?host=true&identity=${user.name}&mic=${mediaSettings.micOn}&video=${mediaSettings.cameraOn}`);
+    }
   };
 
   return (
