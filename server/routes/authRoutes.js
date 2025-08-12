@@ -18,31 +18,29 @@ router.get('/profile', verifyToken, (req, res) => {
  */
 router.post('/login', async (req, res) => {
   try {
-    const { token } = req.body;
+    const { user } = req.body;
+    const { email, name, picture } = user;
     const redis = req.app.get('redis');
 
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required for login.' });
+    }
 
     const userData = {
-      name: payload.name,
-      email: payload.email,
+      name: name,
+      email: email,
       isGoogleUser: true,
-      photoURL: payload.picture,
+      photoURL: picture,
     };
 
     // Upsert user in MongoDB to ensure they are in the main database
     await User.findOneAndUpdate(
-        { email: userData.email },
-        { ...userData, password: "" }, // Ensure password is not stored for Google users
-        { upsert: true, new: true }
+      { email: userData.email },
+      { name: userData.name, photoURL: userData.photoURL, isGoogleUser: true, password: "" },
+      { upsert: true, new: true }
     );
 
-
-    // Cache the non-sensitive user data with the isGoogleUser flag
+    // Cache the non-sensitive user data
     await redis.set(`user:${userData.email}`, JSON.stringify(userData));
 
     const authToken = jwt.sign(userData, process.env.JWT_SECRET, {
@@ -59,7 +57,7 @@ router.post('/login', async (req, res) => {
     res.json({ user: userData });
   } catch (error) {
     console.error('Google auth error:', error);
-    res.status(401).json({ error: 'Authentication failed' });
+    res.status(500).json({ error: 'Authentication failed' });
   }
 });
 

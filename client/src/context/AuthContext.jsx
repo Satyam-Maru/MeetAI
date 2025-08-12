@@ -46,17 +46,23 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, []);
 
-  const handleLoginSuccess = async ({ token }) => {
+  const handleLoginSuccess = async ({ user }) => {
     try {
       setAuthError("");
-      await axios.post(`${url}/api/auth/login`, { token });
-      await fetchUser();
+      // Send the user object containing name, email, picture
+      await axios.post(`${url}/api/auth/login`, { user });
+      setUser(user);
+      setIsLoggedIn(true);
       setShowAuthModal(false);
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     } catch (err) {
       console.error("Google login failed:", err);
-      setAuthError("Google login failed. Please try again.");
+      if (err.response && err.response.data && err.response.data.error) {
+        setAuthError(err.response.data.error);
+      } else {
+        setAuthError("An unexpected error occurred during login.");
+      }
     }
   };
 
@@ -72,7 +78,6 @@ export const AuthProvider = ({ children }) => {
       setAuthError("Please enter a valid email address.");
       return;
     }
-
 
     try {
       setAuthError("");
@@ -103,7 +108,6 @@ export const AuthProvider = ({ children }) => {
       setIsLoggedIn(false);
     }
   };
-
 
   if (loading) {
     return <div className="loading-screen">Loading...</div>;
