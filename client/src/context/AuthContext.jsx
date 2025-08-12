@@ -46,23 +46,17 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, []);
 
-  const handleLoginSuccess = async ({ user }) => {
+  const handleLoginSuccess = async ({ token }) => {
     try {
       setAuthError("");
-      // Send the user object containing name, email, picture
-      await axios.post(`${url}/api/auth/login`, { user });
-      setUser(user);
-      setIsLoggedIn(true);
+      await axios.post(`${url}/api/auth/login`, { token });
+      await fetchUser();
       setShowAuthModal(false);
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     } catch (err) {
       console.error("Google login failed:", err);
-      if (err.response && err.response.data && err.response.data.error) {
-        setAuthError(err.response.data.error);
-      } else {
-        setAuthError("An unexpected error occurred during login.");
-      }
+      setAuthError("Google login failed. Please try again.");
     }
   };
 
