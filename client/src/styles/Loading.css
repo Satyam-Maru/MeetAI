@@ -1,0 +1,32 @@
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000;
+  z-index: 5;
+}
+
+.loading-text {
+  font-size: 2rem;
+  font-weight: bold;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  animation: textFadeInOut 2.5s ease-in-out infinite;
+}
+
+@keyframes textFadeInOut {
+  0%, 100% {
+    opacity: 0.2;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+  }
+}
