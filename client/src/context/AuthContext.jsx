@@ -43,14 +43,28 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    fetchUser();
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      // If a token exists, set it as the default auth header for axios
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      fetchUser(); // fetchUser will now use the token from the header
+    } else {
+      setLoading(false);
+    }
   }, []);
 
-  const handleLoginSuccess = async ({ token }) => {
+  const handleLoginSuccess = async ({ token: googleToken }) => {
     try {
       setAuthError("");
-      await axios.post(`${url}/api/auth/login`, { token });
-      await fetchUser();
+      // The server now sends back a JWT for our API
+      const response = await axios.post(`${url}/api/auth/login`, { token: googleToken });
+      const { user, token } = response.data; // Destructure the user and our API token
+
+      localStorage.setItem('authToken', token); // Store the token
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`; // Set for subsequent requests
+
+      setUser(user);
+      setIsLoggedIn(true);
       setShowAuthModal(false);
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
@@ -76,8 +90,14 @@ export const AuthProvider = ({ children }) => {
     try {
       setAuthError("");
       const endpoint = isSignUp ? "/api/auth/signup" : "/api/auth/signin";
-      await axios.post(`${url}${endpoint}`, { email, password });
-      await fetchUser();
+      const response = await axios.post(`${url}${endpoint}`, { email, password });
+      const { user, token } = response.data; // Destructure the user and our API token
+
+      localStorage.setItem('authToken', token); // Store the token
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`; // Set for subsequent requests
+
+      setUser(user);
+      setIsLoggedIn(true);
       setShowAuthModal(false);
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
@@ -93,13 +113,15 @@ export const AuthProvider = ({ children }) => {
 
   const handleLogout = async () => {
     try {
-      const res = await axios.post(`${url}/api/auth/logout`);
-      console.log(`logout message: ${res.data.message}`);
+      await axios.post(`${url}/api/auth/logout`);
     } catch (err) {
       console.error("Logout failed:", err);
     } finally {
+      // Clear user state and remove the token from storage
       setUser(null);
       setIsLoggedIn(false);
+      localStorage.removeItem('authToken');
+      delete axios.defaults.headers.common['Authorization'];
     }
   };
 

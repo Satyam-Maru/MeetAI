@@ -1,7 +1,9 @@
 import jwt from 'jsonwebtoken';
 
 function verifyToken(req, res, next) {
-    const token = req.cookies.authToken;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
     if (!token) return res.status(401).json({ message: 'Unauthorized', success: false });
 
     try {

@@ -57,14 +57,14 @@ router.post('/login', async (req, res) => {
       expiresIn: '3d',
     });
 
-    res.cookie('authToken', authToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'None',
-      maxAge: 3 * 24 * 60 * 60 * 1000,
-    });
+    // res.cookie('authToken', authToken, {
+    //   httpOnly: true,
+    //   secure: true,
+    //   sameSite: 'None',
+    //   maxAge: 3 * 24 * 60 * 60 * 1000,
+    // });
 
-    res.json({ user: userData });
+    res.json({ user: userData, token: authToken });
   } catch (error) {
     console.error('Google auth error:', error);
     res.status(401).json({ error: 'Authentication failed' });
@@ -113,8 +113,10 @@ router.post('/signup', async (req, res) => {
     await redis.set(`user:${email}`, JSON.stringify(userPayload));
 
     const authToken = jwt.sign(userPayload, process.env.JWT_SECRET, { expiresIn: '3d' });
-    res.cookie('authToken', authToken, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 3 * 24 * 60 * 60 * 1000 });
-    res.json({ user: userPayload });
+    
+    // res.cookie('authToken', authToken, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 3 * 24 * 60 * 60 * 1000 });
+    
+    res.json({ user: userPayload, token: authToken });
   } catch (err) {
     console.error('Error during signup:', err);
     res.status(500).json({ error: 'Server error' });
@@ -159,8 +161,10 @@ router.post('/signin', async (req, res) => {
 
     // 5. Successful login, sign JWT and set cookie.
     const authToken = jwt.sign(userPayload, process.env.JWT_SECRET, { expiresIn: '3d' });
-    res.cookie('authToken', authToken, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 3 * 24 * 60 * 60 * 1000 });
-    res.json({ user: userPayload });
+    
+    // res.cookie('authToken', authToken, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 3 * 24 * 60 * 60 * 1000 });
+    
+    res.json({ user: userPayload, token: authToken  });
 
   } catch (err) {
     console.error('Error during signin:', err);
@@ -172,11 +176,11 @@ router.post('/signin', async (req, res) => {
  * Handles user logout by clearing the authentication cookie.
  */
 router.post('/logout', (req, res) => {
-  res.clearCookie('authToken', {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'None',
-  });
+  // res.clearCookie('authToken', {
+  //   httpOnly: true,
+  //   secure: true,
+  //   sameSite: 'None',
+  // });
   res.json({ message: 'Logged out' });
 });
 
