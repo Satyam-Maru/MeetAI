@@ -1,10 +1,31 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
+import "../styles/Loading.css";
+import "../styles/RoomControls.css"
 
 const AuthContext = createContext();
 
 axios.defaults.withCredentials = true;
+
+const Notification = ({ message, type, onDismiss }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onDismiss();
+    }, 4000); // Auto-dismiss after 4 seconds
+
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
+
+  return (
+    <div className={`notification-container ${type}`}>
+      <p className="notification-message">{message}</p>
+      <button className="notification-dismiss-btn" onClick={onDismiss}>
+        &times;
+      </button>
+    </div>
+  );
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -17,6 +38,15 @@ export const AuthProvider = ({ children }) => {
   const [authError, setAuthError] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
+  const [notification, setNotification] = useState({ visible: false, message: "", type: "error" });
+
+  const showNotification = (message, type = 'error') => {
+    setNotification({ visible: true, message, type });
+  };
+
+  const dismissNotification = () => {
+    setNotification({ visible: false, message: "", type: "error" });
+  };
 
   const url =
     import.meta.env.VITE_PLATFORM === "dev"
@@ -57,11 +87,13 @@ export const AuthProvider = ({ children }) => {
     try {
       setAuthError("");
       // The server now sends back a JWT for our API
-      const response = await axios.post(`${url}/api/auth/login`, { token: googleToken });
+      const response = await axios.post(`${url}/api/auth/login`, {
+        token: googleToken,
+      });
       const { user, token } = response.data; // Destructure the user and our API token
 
-      localStorage.setItem('authToken', token); // Store the token
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`; // Set for subsequent requests
+      localStorage.setItem("authToken", token); // Store the token
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; // Set for subsequent requests
 
       setUser(user);
       setIsLoggedIn(true);
@@ -69,8 +101,11 @@ export const AuthProvider = ({ children }) => {
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     } catch (err) {
-      console.error("Google login failed:", err);
-      setAuthError("Google login failed. Please try again.");
+      if (err.code === "ERR_NETWORK") {
+        showNotification("Server is starting up. Please try again in a moment.", "info");
+      }else{
+        setAuthError("Google login failed. Please try again.");
+      }
     }
   };
 
@@ -90,11 +125,14 @@ export const AuthProvider = ({ children }) => {
     try {
       setAuthError("");
       const endpoint = isSignUp ? "/api/auth/signup" : "/api/auth/signin";
-      const response = await axios.post(`${url}${endpoint}`, { email, password });
+      const response = await axios.post(`${url}${endpoint}`, {
+        email,
+        password,
+      });
       const { user, token } = response.data; // Destructure the user and our API token
 
-      localStorage.setItem('authToken', token); // Store the token
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`; // Set for subsequent requests
+      localStorage.setItem("authToken", token); // Store the token
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; // Set for subsequent requests
 
       setUser(user);
       setIsLoggedIn(true);
@@ -102,12 +140,13 @@ export const AuthProvider = ({ children }) => {
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.error) {
+      if (err.code === "ERR_NETWORK") {
+        showNotification("Server is starting up. Please wait a moment.", "info");
+      } else if (err.response && err.response.data && err.response.data.error) {
         setAuthError(err.response.data.error);
       } else {
         setAuthError("An unexpected error occurred. Please try again.");
       }
-      console.error(`${isSignUp ? "Signup" : "Login"} failed:`, err);
     }
   };
 
@@ -120,13 +159,17 @@ export const AuthProvider = ({ children }) => {
       // Clear user state and remove the token from storage
       setUser(null);
       setIsLoggedIn(false);
-      localStorage.removeItem('authToken');
-      delete axios.defaults.headers.common['Authorization'];
+      localStorage.removeItem("authToken");
+      delete axios.defaults.headers.common["Authorization"];
     }
   };
 
   if (loading) {
-    return <div className="loading-screen">Loading...</div>;
+    return (
+      <div className="loading-screen">
+        <p className="loading-text">Loading...</p>
+      </div>
+    );
   }
 
   return (
@@ -148,8 +191,16 @@ export const AuthProvider = ({ children }) => {
         handleEmailLogin,
         handleLoginSuccess,
         handleLogout,
+        showNotification
       }}
     >
+      {notification.visible && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onDismiss={dismissNotification}
+        />
+      )}
       {children}
     </AuthContext.Provider>
   );

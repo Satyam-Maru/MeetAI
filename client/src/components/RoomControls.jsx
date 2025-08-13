@@ -1,32 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import "../styles/RoomControls.css";
-import Dice from "../assets/dice-svg.svg";
 import Modal from "react-modal";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import MediaSetupModal from "./MediaSetupModal";
+import Dice from "../assets/dice-svg.svg";
+import "../styles/RoomControls.css";
+import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 
 Modal.setAppElement("#root");
-
-// A new component for the notification
-const Notification = ({ message, onDismiss }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onDismiss();
-    }, 3000); // Auto-dismiss after 5 seconds
-
-    return () => clearTimeout(timer);
-  }, [onDismiss]);
-
-  return (
-    <div className="notification-container">
-      <p className="notification-message">{message}</p>
-      <button className="notification-dismiss-btn" onClick={onDismiss}>
-        &times;
-      </button>
-    </div>
-  );
-};
 
 const RoomControls = ({ onLogout, user }) => {
   const navigate = useNavigate();
@@ -34,7 +15,7 @@ const RoomControls = ({ onLogout, user }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [roomName, setRoomName] = useState("");
   const [error, setError] = useState("");
-  const [notification, setNotification] = useState({ visible: false, message: "" });
+  const { showNotification } = useAuth(); // <-- Get showNotification from context
   const [isRoomValid, setIsRoomValid] = useState(false);
   const bridgeRef = useRef(null);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -49,15 +30,6 @@ const RoomControls = ({ onLogout, user }) => {
   const url = import.meta.env.VITE_PLATFORM === 'dev'
     ? import.meta.env.VITE_LOCALHOST_URL
     : import.meta.env.VITE_BACKEND_URL;
-
-  const showNotification = (message) => {
-    setNotification({ visible: true, message });
-  };
-
-  const dismissNotification = () => {
-    setNotification({ visible: false, message: "" });
-  };
-
 
   const extractRoomNameFromUrl = (value) => {
     try {
@@ -90,14 +62,14 @@ const RoomControls = ({ onLogout, user }) => {
         bridgeRef.current?.classList.add("joined");
         bridgeRef.current?.classList.remove("error", "active-flow");
       } else { // Room does not exist
-        showNotification("This room does not exist. Please check the name or link.");
+        showNotification("This room does not exist. Please check the name or link.", "error");
         setIsRoomValid(false);
         bridgeRef.current?.classList.add("error");
         bridgeRef.current?.classList.remove("joined", "active-flow");
       }
     } catch (error) {
       console.error("Error checking room:", error);
-      showNotification("Could not validate the room. Please try again.");
+      showNotification("Could not validate the room. Please try again.", "error");
       setIsRoomValid(false);
       bridgeRef.current?.classList.add("error");
       bridgeRef.current?.classList.remove("joined", "active-flow");
@@ -108,7 +80,6 @@ const RoomControls = ({ onLogout, user }) => {
     const value = e.target.value;
     setInputValue(value);
     setIsRoomValid(false); // Reset validation on new input
-    dismissNotification();
 
     if (bridgeRef.current) {
         bridgeRef.current.classList.remove("joined", "error", "active-flow");
@@ -119,7 +90,7 @@ const RoomControls = ({ onLogout, user }) => {
         const roomToValidate = extractRoomNameFromUrl(value.trim());
         validationTimeoutRef.current = setTimeout(() => {
             validateRoom(roomToValidate);
-        }, 500); // 500ms delay
+        }, 700); // 700ms delay
     }
   };
 
@@ -181,12 +152,6 @@ const RoomControls = ({ onLogout, user }) => {
 
   return (
     <>
-      {notification.visible && (
-        <Notification
-            message={notification.message}
-            onDismiss={dismissNotification}
-        />
-       )}
       <div className="user-profile-container">
         <button
           className="user-profile-btn"

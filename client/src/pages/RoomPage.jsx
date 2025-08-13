@@ -1,4 +1,3 @@
-// client/src/pages/RoomPage.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
@@ -9,6 +8,7 @@ import {
 import "@livekit/components-styles/index.css";
 import { useAuth } from "../context/AuthContext";
 import "../styles/RoomPage.css";
+import '../styles/Loading.css'
 
 const RoomPage = () => {
   const { roomName } = useParams();
@@ -42,7 +42,7 @@ const RoomPage = () => {
   };
 
   if (!token) {
-    return <div className="loading-container"><h1>Loading...</h1></div>;
+    return <div className="loading-container"><p className="loading-text">Loading...</p></div>;
   }
 
   return (
@@ -55,7 +55,6 @@ const RoomPage = () => {
         video={searchParams.get("video") !== "false"}
         onDisconnected={handleEndCall}
       >
-        {/* The standard VideoConference component includes a chat with sender names */}
         <VideoConference />
       </LiveKitRoom>
     </div>

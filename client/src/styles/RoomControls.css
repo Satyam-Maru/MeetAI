@@ -199,13 +199,11 @@
   }
 }
 
-/* --- Notification Styles --- */
 .notification-container {
   position: fixed;
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #dc3545; /* Red for errors */
   color: white;
   padding: 12px 20px;
   border-radius: 8px;
@@ -215,6 +213,14 @@
   align-items: center;
   gap: 15px;
   animation: fadeInDown 0.3s ease-out;
+}
+
+.notification-container.error {
+  background-color: #dc3545; /* Red for errors */
+}
+
+.notification-container.info {
+  background-color: #17a2b8; /* Blue for info */
 }
 
 .notification-message {
@@ -249,8 +255,6 @@
   }
 }
 
-
-/* Medium devices (tablets, 768px and up) */
 @media (min-width: 768px) {
   .controls-container {
     flex-direction: row;
