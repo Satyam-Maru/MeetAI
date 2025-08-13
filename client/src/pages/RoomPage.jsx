@@ -1,6 +1,6 @@
 // client/src/pages/RoomPage.jsx
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import {
@@ -13,6 +13,7 @@ import "../styles/RoomPage.css";
 import '../styles/Loading.css';
 import ShareModal from '../components/ShareModal';
 import WaitingRoomModal from '../components/WaitingRoomModal';
+import notificationSound from '../assets/notification.mp3'; // Import the sound file
 
 const RoomPage = () => {
   const { roomName } = useParams();
@@ -25,6 +26,7 @@ const RoomPage = () => {
   const [isHost, setIsHost] = useState(false);
   const [showWaitingRoom, setShowWaitingRoom] = useState(false);
   const [pendingParticipants, setPendingParticipants] = useState([]);
+  const audioRef = useRef(new Audio(notificationSound));
 
   const url = import.meta.env.VITE_PLATFORM === 'dev'
     ? import.meta.env.VITE_LOCALHOST_URL
@@ -40,6 +42,18 @@ const RoomPage = () => {
       }
     }
   }, [isHost, roomName, url]);
+
+  // Effect to play sound on new participant
+  useEffect(() => {
+    if (isHost) {
+        const previousCount = sessionStorage.getItem(`pendingCount_${roomName}`) || 0;
+        if (pendingParticipants.length > previousCount) {
+            audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+        }
+        sessionStorage.setItem(`pendingCount_${roomName}`, pendingParticipants.length);
+    }
+  }, [pendingParticipants, isHost, roomName]);
+
 
   useEffect(() => {
     const host = searchParams.get("host") === "true";
@@ -79,7 +93,7 @@ const RoomPage = () => {
 
   useEffect(() => {
     if (isHost) {
-      fetchPendingParticipants(); // Fetch immediately on load for host
+      fetchPendingParticipants();
       const interval = setInterval(fetchPendingParticipants, 5000);
       return () => clearInterval(interval);
     }
@@ -88,7 +102,7 @@ const RoomPage = () => {
   const handleApproveParticipant = async (identity) => {
     try {
       await axios.post(`${url}/waiting-room/approve`, { roomName, identity });
-      fetchPendingParticipants(); // Refresh the list
+      fetchPendingParticipants();
     } catch (error) {
       console.error("Failed to approve participant:", error);
     }
@@ -97,12 +111,11 @@ const RoomPage = () => {
   const handleRejectParticipant = async (identity) => {
     try {
         await axios.post(`${url}/waiting-room/reject`, { roomName, identity });
-        fetchPendingParticipants(); // Refresh list
+        fetchPendingParticipants();
     } catch (error) {
         console.error("Failed to reject participant:", error);
     }
   };
-
 
   const handleEndCall = () => {
     navigate("/");
@@ -126,7 +139,7 @@ const RoomPage = () => {
       {isHost && (
         <>
             <button className="floating-button" onClick={() => setShowWaitingRoom(true)}>
-                Waitlist ({pendingParticipants.length})
+                Waiting Room ({pendingParticipants.length})
             </button>
             <WaitingRoomModal
                 isOpen={showWaitingRoom}
