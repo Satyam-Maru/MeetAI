@@ -1,5 +1,3 @@
-// server/routes/waitingRoomRoutes.js
-
 import express from 'express';
 import { AccessToken } from 'livekit-server-sdk';
 import { verifyToken } from '../middleware/verifyToken.js';

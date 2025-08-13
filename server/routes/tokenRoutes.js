@@ -1,8 +1,6 @@
-// server/routes/tokenRoutes.js
-
 import express from 'express';
 import { AccessToken } from 'livekit-server-sdk';
-import { saveFilter } from '../micro_services/bloom-filter.js';
+import { saveFilter } from '../micro_utilities/bloom-filter.js';
 import { verifyToken } from '../middleware/verifyToken.js';
 
 const router = express.Router();

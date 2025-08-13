@@ -5,7 +5,7 @@ import Redis from 'ioredis';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 
-import { loadFilter } from './micro_services/bloom-filter.js';
+import { loadFilter } from './micro_utilities/bloom-filter.js';
 import authRoutes from './routes/authRoutes.js';
 import tokenRoutes from './routes/tokenRoutes.js';
 import webhookRoutes from './routes/webHookRoutes.js';
@@ -41,7 +41,7 @@ app.set('redis', redis);
 app.use('/api/auth', authRoutes);
 app.use('/get-token', tokenRoutes(redis, bloomFilter));
 app.use('/livekit-webhook', webhookRoutes(redis));
-app.use('/check-room', dbRoutes);
+app.use('/check-room', dbRoutes(bloomFilter));
 app.use('/waiting-room', waitingRoomRoutes(redis));
 
 app.get('/', (req, res) => {
