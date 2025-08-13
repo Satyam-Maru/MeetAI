@@ -4,7 +4,7 @@ import AuthButtons from "../components/AuthButtons";
 import RoomControls from "../components/RoomControls";
 import VideoPlaceholder from "../components/VideoPlaceholder";
 import { useAuth } from "../context/AuthContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/Home.css";
 
 Modal.setAppElement("#root");
@@ -26,8 +26,10 @@ const Home = () => {
     handleEmailLogin,
     handleLoginSuccess,
     handleLogout,
+    showNotification,
   } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -35,7 +37,13 @@ const Home = () => {
     if (!isLoggedIn && from && from !== "/") {
       setShowAuthModal(true);
     }
-  }, [location.state, isLoggedIn]);
+    
+    if (location.state?.message) {
+      showNotification(location.state.message, location.state.type || 'info');
+      // Clear the state to prevent the notification from showing again on refresh
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, isLoggedIn, showNotification, navigate]);
 
   const clearInfo = () => {
     setEmail("");

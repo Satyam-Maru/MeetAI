@@ -27,6 +27,12 @@ const RoomPage = () => {
   const [showWaitingRoom, setShowWaitingRoom] = useState(false);
   const [pendingParticipants, setPendingParticipants] = useState([]);
   const audioRef = useRef(new Audio(notificationSound));
+  const [position, setPosition] = useState({ x: 20, y: 20 });
+  const [dragging, setDragging] = useState(false);
+  const buttonRef = useRef(null);
+  const offset = useRef({ x: 0, y: 0 });
+  const dragged = useRef(false);
+
 
   const url = import.meta.env.VITE_PLATFORM === 'dev'
     ? import.meta.env.VITE_LOCALHOST_URL
@@ -99,6 +105,48 @@ const RoomPage = () => {
     }
   }, [isHost, fetchPendingParticipants]);
 
+   const handleMouseDown = (e) => {
+        dragged.current = false;
+        if (buttonRef.current) {
+            setDragging(true);
+            const rect = buttonRef.current.getBoundingClientRect();
+            offset.current = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top,
+            };
+        }
+    };
+
+    const handleMouseMove = useCallback((e) => {
+        if (dragging) {
+            dragged.current = true;
+            setPosition({
+                x: e.clientX - offset.current.x,
+                y: e.clientY - offset.current.y,
+            });
+        }
+    }, [dragging]);
+
+    const handleMouseUp = () => {
+        setDragging(false);
+    };
+
+     useEffect(() => {
+        if (dragging) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        } else {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [dragging, handleMouseMove]);
+
+
   const handleApproveParticipant = async (identity) => {
     try {
       await axios.post(`${url}/waiting-room/approve`, { roomName, identity });
@@ -118,7 +166,24 @@ const RoomPage = () => {
   };
 
   const handleEndCall = () => {
-    navigate("/");
+    if (!isHost) {
+        // Participant was disconnected, likely by the host ending the meeting.
+        navigate("/", { 
+            state: { 
+                message: "The meeting has been ended by the host.", 
+                type: "info" 
+            } 
+        });
+    } else {
+        // Host is leaving voluntarily.
+        navigate("/");
+    }
+  };
+
+  const handleButtonClick = () => {
+      if (!dragged.current) {
+          setShowWaitingRoom(true);
+      }
   };
 
   if (!token && !isHost) {
@@ -138,7 +203,13 @@ const RoomPage = () => {
       />
       {isHost && (
         <>
-            <button className="floating-button" onClick={() => setShowWaitingRoom(true)}>
+            <button
+                ref={buttonRef}
+                className="floating-button"
+                style={{ top: `${position.y}px`, left: `${position.x}px` }}
+                onMouseDown={handleMouseDown}
+                onClick={handleButtonClick}
+            >
                 Waiting Room ({pendingParticipants.length})
             </button>
             <WaitingRoomModal

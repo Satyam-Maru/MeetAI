@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/Loading.css";
@@ -40,13 +40,13 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const [notification, setNotification] = useState({ visible: false, message: "", type: "error" });
 
-  const showNotification = (message, type = 'error') => {
+  const showNotification = useCallback((message, type = 'error') => {
     setNotification({ visible: true, message, type });
-  };
+  }, []);
 
-  const dismissNotification = () => {
+  const dismissNotification = useCallback(() => {
     setNotification({ visible: false, message: "", type: "error" });
-  };
+  }, []);
 
   const url =
     import.meta.env.VITE_PLATFORM === "dev"
