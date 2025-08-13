@@ -67,9 +67,11 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0); /* Start transparent */
+  background-color: rgba(0, 0, 0, 0);
+  /* Start transparent */
   z-index: 1000;
-  backdrop-filter: blur(0px); /* Start with no blur */
+  backdrop-filter: blur(0px);
+  /* Start with no blur */
   -webkit-backdrop-filter: blur(0px);
   opacity: 0;
   transition: opacity 300ms ease-in-out, backdrop-filter 300ms ease-in-out;
@@ -123,7 +125,7 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;  
+  gap: 16px;
 }
 
 .auth-form input {
@@ -144,7 +146,7 @@
   border: 2px solid rgb(28, 27, 27);
 }
 
-.auth-form button:hover{
+.auth-form button:hover {
   background-color: black;
   border: 2px solid grey;
 }
@@ -210,19 +212,22 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;  
+  gap: 16px;
 }
 
 /* Add this new style for the error message */
 .auth-error {
-  color: #e53e3e; /* A reddish error color */
-  background-color: #fed7d7; /* A light red background */
+  color: #e53e3e;
+  /* A reddish error color */
+  background-color: #fed7d7;
+  /* A light red background */
   border: 1px solid #f56565;
   border-radius: 4px;
   padding: 10px;
   font-size: 14px;
   text-align: center;
-  margin: 0 0 10px 0; /* Margin only at the bottom */
+  margin: 0 0 10px 0;
+  /* Margin only at the bottom */
 }
 
 .auth-form input {
@@ -230,41 +235,37 @@
   border: 1px solid black;
   border-radius: 4px;
   font-size: 16px;
-  box-sizing: border-box; /* Add this to ensure padding is included in width */
+  box-sizing: border-box;
 }
 
-/* Add these new styles */
-.password-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
+.auth-toggle {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 1rem;
+  font-weight: 400;
 }
 
-.password-wrapper input {
-  width: 100%;
-  padding-right: 45px; /* Make space for the icon */
-}
-
-.password-toggle-btn {
-  position: absolute;
-  right: 0%;
-  background-color: #ffffff !important;
-  border: 1px solid black !important;
-  border-radius: 50%;
-  height: 100%;
+.auth-toggle-link {
+  color: black !important; /* A standard blue link color */
+  background-color: transparent !important; /* Override background */
+  border: none !important; /* Remove border */
+  font: inherit;
+  font-size: 1rem; /* Explicitly set font size */
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
+  text-align: center;
+  font-weight: 500;
 }
 
-/* Target the SVG icon directly */
-.password-toggle-btn svg {
-  stroke: #000; /* Directly set the icon color to black */
+.auth-toggle-link:hover {
+  color: rgb(24, 23, 23) !important; /* A slightly darker blue on hover */
+  text-decoration: underline;
+  background-color: transparent !important; /* Ensure no background on hover */
 }
 
-.password-toggle-btn:hover {
-  background-color: whitesmoke !important;
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: black !important;
 }
