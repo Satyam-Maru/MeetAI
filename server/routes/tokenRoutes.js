@@ -1,3 +1,5 @@
+// server/routes/tokenRoutes.js
+
 import express from 'express';
 import { AccessToken } from 'livekit-server-sdk';
 import { saveFilter } from '../micro_services/bloom-filter.js';
@@ -14,49 +16,45 @@ export default (redis, bloomFilter) => {
     }
 
     try {
-      const token = new AccessToken(
-        process.env.LIVEKIT_API_KEY,
-        process.env.LIVEKIT_API_SECRET,
-        { identity, name: identity }
-      );
-
-      token.addGrant({
-        room: roomName,
-        roomCreate: isHost,
-        roomJoin: true,
-        canPublish: true,
-        canSubscribe: true,
-      });
-
       if (isHost) {
-        const exists = await redis.sismember('livekit:room_set', roomName);
-        if (exists) {
-          return res.status(409).json({ error: 'Room already exists' });
-        }
-
+        // Host token generation logic remains the same...
+        const token = new AccessToken(
+          process.env.LIVEKIT_API_KEY,
+          process.env.LIVEKIT_API_SECRET,
+          { identity, name: identity }
+        );
+        token.addGrant({
+          room: roomName,
+          roomCreate: true,
+          roomJoin: true,
+          canPublish: true,
+          canSubscribe: true,
+        });
         await redis.set(`livekit:host:${roomName}`, identity);
         await redis.sadd('livekit:room_set', roomName);
         bloomFilter.add(roomName);
         await saveFilter('livekit:room_bloom', bloomFilter);
-
         const url = process.env.PLATFORM == 'dev'? process.env.VITE_LOCALHOST : process.env.VERCEL_URL;
-
-        return res.json({ 
+        return res.json({
           token: await token.toJwt(),
           roomName,
           url: `${url}/${roomName}?host=true`,
         });
       } else {
-        if (!bloomFilter.has(roomName)) {
-          return res.status(404).json({ error: 'Room does not exist' });
+        // Participant requests to join
+        if (!bloomFilter.has(roomName) || !(await redis.sismember('livekit:room_set', roomName))) {
+          return res.status(404).json({ error: 'Room not found or not active' });
         }
-
-        const confirmed = await redis.sismember('livekit:room_set', roomName);
-        if (!confirmed) {
-          return res.status(404).json({ error: 'Room not active' });
-        }
-
-        return res.json({ token: await token.toJwt() });
+        
+        // Store the user's full details in the pending list
+        const userToWait = {
+          name: req.user.name,
+          email: req.user.email,
+          photoURL: req.user.photoURL,
+        };
+        await redis.rpush(`pending:participants:${roomName}`, JSON.stringify(userToWait));
+        
+        return res.status(202).json({ message: 'Request to join sent. Waiting for host approval.' });
       }
     } catch (error) {
       console.error('Token generation error:', error);

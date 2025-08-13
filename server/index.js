@@ -10,6 +10,7 @@ import authRoutes from './routes/authRoutes.js';
 import tokenRoutes from './routes/tokenRoutes.js';
 import webhookRoutes from './routes/webHookRoutes.js';
 import dbRoutes from './routes/dbRoutes.js';
+import waitingRoomRoutes from './routes/waitingRoomRoutes.js';
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use('/api/auth', authRoutes);
 app.use('/get-token', tokenRoutes(redis, bloomFilter));
 app.use('/livekit-webhook', webhookRoutes(redis));
 app.use('/check-room', dbRoutes);
+app.use('/waiting-room', waitingRoomRoutes(redis));
 
 app.get('/', (req, res) => {
   res.send('✅ LiveKit + Bloom Filter + MongoDB Atlas working');
