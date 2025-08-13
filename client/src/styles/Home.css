@@ -262,10 +262,10 @@
   background-color: transparent !important; /* Ensure no background on hover */
 }
 
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
+.auth-modal input:-webkit-autofill,
+.auth-modal :-webkit-autofill:hover,
+.auth-modal :-webkit-autofill:focus,
+.auth-modal input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 30px white inset !important;
   -webkit-text-fill-color: black !important;
 }

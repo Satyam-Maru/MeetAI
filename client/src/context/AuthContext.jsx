@@ -101,6 +101,7 @@ export const AuthProvider = ({ children }) => {
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     } catch (err) {
+      console.log(err.message)
       if (err.code === "ERR_NETWORK") {
         showNotification("Server is starting up. Please try again in a moment.", "info");
       }else{
@@ -147,6 +148,7 @@ export const AuthProvider = ({ children }) => {
       } else {
         setAuthError("An unexpected error occurred. Please try again.");
       }
+      console.log(err.message)
     }
   };
 
