@@ -105,46 +105,64 @@ const RoomPage = () => {
     }
   }, [isHost, fetchPendingParticipants]);
 
-   const handleMouseDown = (e) => {
-        dragged.current = false;
-        if (buttonRef.current) {
-            setDragging(true);
-            const rect = buttonRef.current.getBoundingClientRect();
-            offset.current = {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top,
-            };
-        }
+   const handleDragStart = (e) => {
+    dragged.current = false;
+    setDragging(true);
+
+    const clientX = e.clientX || e.touches[0].clientX;
+    const clientY = e.clientY || e.touches[0].clientY;
+
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      offset.current = {
+        x: clientX - rect.left,
+        y: clientY - rect.top,
+      };
+    }
+  };
+
+  const handleDragMove = useCallback(
+    (e) => {
+      if (dragging) {
+        dragged.current = true;
+        const clientX = e.clientX || e.touches[0].clientX;
+        const clientY = e.clientY || e.touches[0].clientY;
+
+        setPosition({
+          x: clientX - offset.current.x,
+          y: clientY - offset.current.y,
+        });
+      }
+    },
+    [dragging]
+  );
+
+  const handleDragEnd = () => {
+    setDragging(false);
+  };
+
+  useEffect(() => {
+    const currentRef = buttonRef.current;
+  
+    if (dragging) {
+      document.addEventListener("mousemove", handleDragMove);
+      document.addEventListener("mouseup", handleDragEnd);
+      document.addEventListener("touchmove", handleDragMove);
+      document.addEventListener("touchend", handleDragEnd);
+    } else {
+      document.removeEventListener("mousemove", handleDragMove);
+      document.removeEventListener("mouseup", handleDragEnd);
+      document.removeEventListener("touchmove", handleDragMove);
+      document.removeEventListener("touchend", handleDragEnd);
+    }
+  
+    return () => {
+      document.removeEventListener("mousemove", handleDragMove);
+      document.removeEventListener("mouseup", handleDragEnd);
+      document.removeEventListener("touchmove", handleDragMove);
+      document.removeEventListener("touchend", handleDragEnd);
     };
-
-    const handleMouseMove = useCallback((e) => {
-        if (dragging) {
-            dragged.current = true;
-            setPosition({
-                x: e.clientX - offset.current.x,
-                y: e.clientY - offset.current.y,
-            });
-        }
-    }, [dragging]);
-
-    const handleMouseUp = () => {
-        setDragging(false);
-    };
-
-     useEffect(() => {
-        if (dragging) {
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-        } else {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        }
-
-        return () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        };
-    }, [dragging, handleMouseMove]);
+  }, [dragging, handleDragMove]);
 
 
   const handleApproveParticipant = async (identity) => {
@@ -207,7 +225,8 @@ const RoomPage = () => {
                 ref={buttonRef}
                 className="floating-button"
                 style={{ top: `${position.y}px`, left: `${position.x}px` }}
-                onMouseDown={handleMouseDown}
+                onMouseDown={handleDragStart}
+                onTouchStart={handleDragStart}
                 onClick={handleButtonClick}
             >
                 Waiting Room ({pendingParticipants.length})
