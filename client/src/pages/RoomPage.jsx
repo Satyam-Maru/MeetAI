@@ -7,7 +7,6 @@ import {
   LiveKitRoom,
   VideoConference,
   useParticipants,
-  useLiveKitRoom
 } from "@livekit/components-react";
 import "@livekit/components-styles/index.css";
 import { DisconnectReason } from 'livekit-client';
@@ -32,7 +31,6 @@ const HamburgerIcon = () => (
 const RoomPageContent = () => {
     const participants = useParticipants();
     const { roomName } = useParams();
-    const navigate = useNavigate();
     const { user } = useAuth();
     const [showShareModal, setShowShareModal] = useState(false);
     const [roomUrl, setRoomUrl] = useState('');
@@ -346,6 +344,11 @@ const RoomPage = () => {
     <LiveKitRoom
       token={token}
       serverUrl={import.meta.env.VITE_LIVEKIT_URL}
+      options={{
+        audioCaptureDefaults: {
+          noiseSuppression: true,
+        },
+      }}
       connectOptions={{ autoSubscribe: true }}
       audio={searchParams.get("mic") !== "false"}
       video={searchParams.get("video") !== "false"}

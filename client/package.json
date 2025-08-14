@@ -12,6 +12,7 @@
   "dependencies": {
     "@livekit/components-react": "^2.9.12",
     "@livekit/components-styles": "^1.1.6",
+    "@livekit/krisp-noise-filter": "^0.2.12",
     "@react-oauth/google": "^0.12.2",
     "@vercel/analytics": "^1.5.0",
     "axios": "^1.10.0",

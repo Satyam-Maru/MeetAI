@@ -1,8 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from 'react-modal';
 import '../styles/JoinedUsersModal.css';
 
 const JoinedUsersModal = ({ isOpen, onRequestClose, participants, onRemoveParticipant, onBack, hostIdentity }) => {
+  const [removingId, setRemovingId] = useState(null);
+
+  const handleRemoveClick = async (identity) => {
+    setRemovingId(identity);
+    try {
+      await onRemoveParticipant(identity);
+      // The participant will be removed from the list on the next render,
+      // so we don't need to manually set removingId back to null here.
+    } catch (error) {
+      console.error("Failed to remove participant on client:", error);
+      setRemovingId(null); // Reset spinner on failure
+    }
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -30,8 +44,12 @@ const JoinedUsersModal = ({ isOpen, onRequestClose, participants, onRemovePartic
                 </div>
                 {participant.identity !== hostIdentity && (
                   <div className="action-buttons">
-                    <button onClick={() => onRemoveParticipant(participant.identity)} className="action-button remove">
-                      Remove
+                    <button 
+                      onClick={() => handleRemoveClick(participant.identity)} 
+                      className="action-button remove"
+                      disabled={removingId === participant.identity}
+                    >
+                      {removingId === participant.identity ? <div className="spinner"></div> : 'Remove'}
                     </button>
                   </div>
                 )}
