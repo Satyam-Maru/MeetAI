@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import Home from "./pages/Home";
-import Room from "./pages/Room";
 import "./App.css";
 import RoomPage from "./pages/RoomPage";
 import PageNotFound from "./pages/PageNotFound";
