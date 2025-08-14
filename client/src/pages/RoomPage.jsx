@@ -13,7 +13,17 @@ import "../styles/RoomPage.css";
 import '../styles/Loading.css';
 import ShareModal from '../components/ShareModal';
 import WaitingRoomModal from '../components/WaitingRoomModal';
-import notificationSound from '../assets/notification.mp3'; // Import the sound file
+import MenuModal from '../components/MenuModal'; // Import the new MenuModal
+import notificationSound from '../assets/notification.mp3';
+
+// Hamburger Icon SVG
+const HamburgerIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="3" y1="12" x2="21" y2="12"></line>
+    <line x1="3" y1="6" x2="21" y2="6"></line>
+    <line x1="3" y1="18" x2="21" y2="18"></line>
+  </svg>
+);
 
 const RoomPage = () => {
   const { roomName } = useParams();
@@ -25,14 +35,14 @@ const RoomPage = () => {
   const [roomUrl, setRoomUrl] = useState('');
   const [isHost, setIsHost] = useState(false);
   const [showWaitingRoom, setShowWaitingRoom] = useState(false);
+  const [showMenuModal, setShowMenuModal] = useState(false); // State for the new menu modal
   const [pendingParticipants, setPendingParticipants] = useState([]);
-  const audioRef = useRef(new Audio(notificationSound));
+  const audioRef = useRef(null);
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [dragging, setDragging] = useState(false);
   const buttonRef = useRef(null);
   const offset = useRef({ x: 0, y: 0 });
   const dragged = useRef(false);
-
 
   const url = import.meta.env.VITE_PLATFORM === 'dev'
     ? import.meta.env.VITE_LOCALHOST_URL
@@ -52,11 +62,13 @@ const RoomPage = () => {
   // Effect to play sound on new participant
   useEffect(() => {
     if (isHost) {
-        const previousCount = sessionStorage.getItem(`pendingCount_${roomName}`) || 0;
+        const previousCount = parseInt(sessionStorage.getItem(`pendingCount_${roomName}`) || '0', 10);
         if (pendingParticipants.length > previousCount) {
-            audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+            if (audioRef.current) {
+                audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+            }
         }
-        sessionStorage.setItem(`pendingCount_${roomName}`, pendingParticipants.length);
+        sessionStorage.setItem(`pendingCount_${roomName}`, pendingParticipants.length.toString());
     }
   }, [pendingParticipants, isHost, roomName]);
 
@@ -74,7 +86,7 @@ const RoomPage = () => {
         if (host) {
             setToken(res.data.token);
             const currentUrl = window.location.href;
-            setRoomUrl(currentUrl.split('?', 1));
+            setRoomUrl(currentUrl.split('?', 1)[0]);
             setShowShareModal(true);
         } else {
             const interval = setInterval(async () => {
@@ -142,8 +154,6 @@ const RoomPage = () => {
   };
 
   useEffect(() => {
-    const currentRef = buttonRef.current;
-  
     if (dragging) {
       document.addEventListener("mousemove", handleDragMove);
       document.addEventListener("mouseup", handleDragEnd);
@@ -163,7 +173,6 @@ const RoomPage = () => {
       document.removeEventListener("touchend", handleDragEnd);
     };
   }, [dragging, handleDragMove]);
-
 
   const handleApproveParticipant = async (identity) => {
     try {
@@ -185,7 +194,6 @@ const RoomPage = () => {
 
   const handleEndCall = () => {
     if (!isHost) {
-        // Participant was disconnected, likely by the host ending the meeting.
         navigate("/", { 
             state: { 
                 message: "The meeting has been ended by the host.", 
@@ -193,16 +201,25 @@ const RoomPage = () => {
             } 
         });
     } else {
-        // Host is leaving voluntarily.
         navigate("/");
     }
   };
 
-  const handleButtonClick = () => {
+  const handleMenuButtonClick = () => {
       if (!dragged.current) {
-          setShowWaitingRoom(true);
+          setShowMenuModal(true);
       }
   };
+
+  const openWaitingRoom = () => {
+    setShowMenuModal(false);
+    setShowWaitingRoom(true);
+  }
+
+  const backToMenu = () => {
+    setShowWaitingRoom(false);
+    setShowMenuModal(true);
+  }
 
   if (!token && !isHost) {
     return <div className="loading-screen"><p className="loading-text">Waiting for host to approve...</p></div>;
@@ -214,6 +231,7 @@ const RoomPage = () => {
 
   return (
     <>
+      <audio ref={audioRef} src={notificationSound} preload="auto" />
       <ShareModal
         isOpen={showShareModal}
         onRequestClose={() => setShowShareModal(false)}
@@ -223,20 +241,28 @@ const RoomPage = () => {
         <>
             <button
                 ref={buttonRef}
-                className="floating-button"
+                className="floating-menu-button"
                 style={{ top: `${position.y}px`, left: `${position.x}px` }}
                 onMouseDown={handleDragStart}
                 onTouchStart={handleDragStart}
-                onClick={handleButtonClick}
+                onClick={handleMenuButtonClick}
             >
-                Waiting Room ({pendingParticipants.length})
+                <HamburgerIcon />
+                {pendingParticipants.length > 0 && <span className="notification-badge menu-badge">{pendingParticipants.length}</span>}
             </button>
+            <MenuModal
+                isOpen={showMenuModal}
+                onRequestClose={() => setShowMenuModal(false)}
+                onWaitingRoomClick={openWaitingRoom}
+                waitingRoomCount={pendingParticipants.length}
+            />
             <WaitingRoomModal
                 isOpen={showWaitingRoom}
                 onRequestClose={() => setShowWaitingRoom(false)}
                 pendingParticipants={pendingParticipants}
                 onApprove={handleApproveParticipant}
                 onReject={handleRejectParticipant}
+                onBack={backToMenu}
             />
         </>
       )}

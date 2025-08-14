@@ -35,9 +35,11 @@
   margin: 0;
   font-size: 1.6rem;
   font-weight: 600;
+  text-align: center;
+  flex-grow: 1;
 }
 
-.modal-header .close-button {
+.modal-header .close-button, .modal-header .back-button {
   background: none;
   border: none;
   color: #888;
@@ -47,7 +49,7 @@
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
-.modal-header .close-button:hover {
+.modal-header .close-button:hover, .modal-header .back-button:hover {
   color: #ff4d4d;
   transform: scale(1.1);
 }

@@ -12,7 +12,7 @@ const RejectIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
 );
 
-const WaitingRoomModal = ({ isOpen, onRequestClose, pendingParticipants, onApprove, onReject }) => {
+const WaitingRoomModal = ({ isOpen, onRequestClose, pendingParticipants = [], onApprove, onReject, onBack }) => {
   return (
     <Modal
       isOpen={isOpen}
@@ -22,6 +22,7 @@ const WaitingRoomModal = ({ isOpen, onRequestClose, pendingParticipants, onAppro
       ariaHideApp={false}
     >
       <div className="modal-header">
+        <button onClick={onBack} className="back-button">&larr;</button>
         <h2>Waiting Room</h2>
         <button onClick={onRequestClose} className="close-button">&times;</button>
       </div>
