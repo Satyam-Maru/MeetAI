@@ -23,14 +23,6 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/roompage"
-              element={
-                <ProtectedRoute>
-                  <Room />
-                </ProtectedRoute>
-              }
-            />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </AuthProvider>
