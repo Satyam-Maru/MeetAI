@@ -1,3 +1,5 @@
+An updated `README.md` file for the project is below.
+
 # MeetAI 📹
 
 MeetAI is a real-time video conferencing application built with the MERN stack (MongoDB, Express, React, Node.js) and integrated with the LiveKit API for video and audio functionalities. It provides a seamless and interactive video meeting experience with features like user authentication, room management, and a waiting room for hosts to control participant access.
@@ -9,7 +11,10 @@ MeetAI is a real-time video conferencing application built with the MERN stack (
   * **Real-time Communication**: High-quality video and audio streaming powered by LiveKit.
   * **User Authentication**: Secure sign-up and sign-in functionality with both email/password and Google OAuth.
   * **Room Management**: Users can create new rooms with randomly generated names or join existing ones using a room name or invite link.
-  * **Waiting Room**: Hosts have control over who joins the meeting, with the ability to approve or reject the participants.
+  * **Waiting Room**: Hosts have control over who joins the meeting, with the ability to approve or reject participants.
+  * **Host Menu**: A dedicated menu for hosts to manage the meeting, including access to the waiting room and a list of joined users.
+  * **Participant Management**: Hosts can remove participants from the room.
+  * **Noise Suppression**: Integrated with Krisp for advanced noise suppression, ensuring clear audio.
   * **Notifications**: Real-time notifications for hosts when a new participant joins the waiting room.
   * **Responsive Design**: A user-friendly interface that works on both desktop and mobile devices.
 
@@ -22,6 +27,7 @@ MeetAI is a real-time video conferencing application built with the MERN stack (
   * React
   * Vite
   * LiveKit Client SDK
+  * Krisp Noise Filter SDK
   * Axios
   * React Router
 
@@ -112,4 +118,6 @@ MeetAI is a real-time video conferencing application built with the MERN stack (
 1.  **Authentication**: Sign up or sign in using your email and password or with your Google account.
 2.  **Create a Room**: Click on the "Create Room" button to open a modal where you can either enter a custom room name or generate a random one.
 3.  **Join a Room**: Enter the room name or paste the invite link into the input field and click "Join Room". The input field will validate if the room exists.
-4.  **Waiting Room (for hosts)**: As a host, you'll see a floating "Waiting Room" button that shows the number of participants waiting to join. Click on it to open the waiting room modal and approve or reject participants.
+4.  **Host Controls**: As a host, you'll see a floating menu button.
+      * **Waiting Room**: Click the menu button to access the waiting room, where you can approve or reject participants.
+      * **Joined Users**: From the menu, you can also view a list of all participants currently in the room and remove them if necessary.
