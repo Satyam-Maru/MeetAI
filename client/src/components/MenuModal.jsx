@@ -2,7 +2,7 @@ import React from 'react';
 import Modal from 'react-modal';
 import '../styles/MenuModal.css';
 
-const MenuModal = ({ isOpen, onRequestClose, onWaitingRoomClick, waitingRoomCount }) => {
+const MenuModal = ({ isOpen, onRequestClose, onWaitingRoomClick, onJoinedUsersClick, waitingRoomCount }) => {
   return (
     <Modal
       isOpen={isOpen}
@@ -20,6 +20,9 @@ const MenuModal = ({ isOpen, onRequestClose, onWaitingRoomClick, waitingRoomCoun
           <button className="menu-item" onClick={onWaitingRoomClick}>
             <span className="menu-item-text">Waiting Room</span>
             {waitingRoomCount > 0 && <span className="notification-badge">{waitingRoomCount}</span>}
+          </button>
+          <button className="menu-item" onClick={onJoinedUsersClick}>
+            <span className="menu-item-text">Joined Users</span>
           </button>
           {/* Add other menu items here in the future */}
         </div>

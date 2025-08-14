@@ -56,7 +56,7 @@ const RoomControls = ({ onLogout, user }) => {
     bridgeRef.current?.classList.remove("joined", "error");
 
     try {
-      const res = await axios.post(`${url}/check-room`, { room_name: name });
+      const res = await axios.post(`${url}/room/check-room`, { room_name: name });
       if (res.data.msg === 'failure') { // Room exists and is joinable
         setIsRoomValid(true);
         bridgeRef.current?.classList.add("joined");
@@ -114,7 +114,7 @@ const RoomControls = ({ onLogout, user }) => {
       return;
     }
     try {
-      const roomData = await axios.post(`${url}/check-room`, { room_name: roomName });
+      const roomData = await axios.post(`${url}/room/check-room`, { room_name: roomName });
       if (roomData.data.msg === 'failure') {
         setError('Room already exists');
       } else {

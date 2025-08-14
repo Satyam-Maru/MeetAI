@@ -6,14 +6,18 @@ import axios from "axios";
 import {
   LiveKitRoom,
   VideoConference,
+  useParticipants,
+  useLiveKitRoom
 } from "@livekit/components-react";
 import "@livekit/components-styles/index.css";
+import { DisconnectReason } from 'livekit-client';
 import { useAuth } from "../context/AuthContext";
 import "../styles/RoomPage.css";
 import '../styles/Loading.css';
 import ShareModal from '../components/ShareModal';
 import WaitingRoomModal from '../components/WaitingRoomModal';
-import MenuModal from '../components/MenuModal'; // Import the new MenuModal
+import MenuModal from '../components/MenuModal';
+import JoinedUsersModal from '../components/JoinedUsersModal';
 import notificationSound from '../assets/notification.mp3';
 
 // Hamburger Icon SVG
@@ -25,24 +29,24 @@ const HamburgerIcon = () => (
   </svg>
 );
 
-const RoomPage = () => {
-  const { roomName } = useParams();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [token, setToken] = useState(null);
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [roomUrl, setRoomUrl] = useState('');
-  const [isHost, setIsHost] = useState(false);
-  const [showWaitingRoom, setShowWaitingRoom] = useState(false);
-  const [showMenuModal, setShowMenuModal] = useState(false); // State for the new menu modal
-  const [pendingParticipants, setPendingParticipants] = useState([]);
-  const audioRef = useRef(null);
-  const [position, setPosition] = useState({ x: 20, y: 20 });
-  const [dragging, setDragging] = useState(false);
-  const buttonRef = useRef(null);
-  const offset = useRef({ x: 0, y: 0 });
-  const dragged = useRef(false);
+const RoomPageContent = () => {
+    const participants = useParticipants();
+    const { roomName } = useParams();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [roomUrl, setRoomUrl] = useState('');
+    const [isHost, setIsHost] = useState(false);
+    const [showWaitingRoom, setShowWaitingRoom] = useState(false);
+    const [showMenuModal, setShowMenuModal] = useState(false);
+    const [showJoinedUsersModal, setShowJoinedUsersModal] = useState(false);
+    const [pendingParticipants, setPendingParticipants] = useState([]);
+    const audioRef = useRef(null);
+    const [position, setPosition] = useState({ x: 20, y: 20 });
+    const [dragging, setDragging] = useState(false);
+    const buttonRef = useRef(null);
+    const offset = useRef({ x: 0, y: 0 });
+    const dragged = useRef(false);
 
   const url = import.meta.env.VITE_PLATFORM === 'dev'
     ? import.meta.env.VITE_LOCALHOST_URL
@@ -74,40 +78,15 @@ const RoomPage = () => {
 
 
   useEffect(() => {
-    const host = searchParams.get("host") === "true";
+    const host = window.location.search.includes("host=true");
     setIsHost(host);
 
-    const fetchToken = async () => {
-      if (!user) return;
-      const identity = user.name || "Guest";
-      
-      try {
-        const res = await axios.post(`${url}/get-token`, { roomName, identity, isHost: host });
-        if (host) {
-            setToken(res.data.token);
-            const currentUrl = window.location.href;
-            setRoomUrl(currentUrl.split('?', 1)[0]);
-            setShowShareModal(true);
-        } else {
-            const interval = setInterval(async () => {
-                try {
-                    const tokenRes = await axios.get(`${url}/waiting-room/token/${roomName}/${identity}`);
-                    if (tokenRes.data.token) {
-                        setToken(tokenRes.data.token);
-                        clearInterval(interval);
-                    }
-                } catch (err) { /* Still waiting */ }
-            }, 3000);
-        }
-      } catch (error) {
-        if (error.response?.status !== 202) {
-          console.error("Failed to fetch token:", error);
-          navigate("/");
-        }
-      }
-    };
-    fetchToken();
-  }, [roomName, navigate, url, user, searchParams]);
+    if (host) {
+        const currentUrl = window.location.href;
+        setRoomUrl(currentUrl.split('?', 1)[0]);
+        setShowShareModal(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (isHost) {
@@ -192,16 +171,11 @@ const RoomPage = () => {
     }
   };
 
-  const handleEndCall = () => {
-    if (!isHost) {
-        navigate("/", { 
-            state: { 
-                message: "The meeting has been ended by the host.", 
-                type: "info" 
-            } 
-        });
-    } else {
-        navigate("/");
+  const handleRemoveParticipant = async (identity) => {
+    try {
+      await axios.post(`${url}/room/remove-participant`, { roomName, identity });
+    } catch (error) {
+      console.error("Failed to remove participant:", error);
     }
   };
 
@@ -216,70 +190,170 @@ const RoomPage = () => {
     setShowWaitingRoom(true);
   }
 
+  const openJoinedUsers = () => {
+    setShowMenuModal(false);
+    setShowJoinedUsersModal(true);
+  }
+
   const backToMenu = () => {
     setShowWaitingRoom(false);
+    setShowJoinedUsersModal(false);
     setShowMenuModal(true);
   }
+    
+    return (
+        <>
+          <audio ref={audioRef} src={notificationSound} preload="auto" />
+          <ShareModal
+            isOpen={showShareModal}
+            onRequestClose={() => setShowShareModal(false)}
+            roomUrl={roomUrl}
+          />
+          {isHost && (
+            <>
+                <button
+                    ref={buttonRef}
+                    className="floating-menu-button"
+                    style={{ top: `${position.y}px`, left: `${position.x}px` }}
+                    onMouseDown={handleDragStart}
+                    onTouchStart={handleDragStart}
+                    onClick={handleMenuButtonClick}
+                >
+                    <HamburgerIcon />
+                    {pendingParticipants.length > 0 && <span className="notification-badge menu-badge">{pendingParticipants.length}</span>}
+                </button>
+                <MenuModal
+                    isOpen={showMenuModal}
+                    onRequestClose={() => setShowMenuModal(false)}
+                    onWaitingRoomClick={openWaitingRoom}
+                    onJoinedUsersClick={openJoinedUsers}
+                    waitingRoomCount={pendingParticipants.length}
+                />
+                <WaitingRoomModal
+                    isOpen={showWaitingRoom}
+                    onRequestClose={() => setShowWaitingRoom(false)}
+                    pendingParticipants={pendingParticipants}
+                    onApprove={handleApproveParticipant}
+                    onReject={handleRejectParticipant}
+                    onBack={backToMenu}
+                />
+                <JoinedUsersModal
+                    isOpen={showJoinedUsersModal}
+                    onRequestClose={() => setShowJoinedUsersModal(false)}
+                    participants={participants}
+                    onRemoveParticipant={handleRemoveParticipant}
+                    onBack={backToMenu}
+                    hostIdentity={user.name}
+                />
+            </>
+          )}
+          <div data-lk-theme="default" className="room-page-container">
+              <VideoConference />
+          </div>
+        </>
+    )
+}
 
-  if (!token && !isHost) {
-    return <div className="loading-screen"><p className="loading-text">Waiting for host to approve...</p></div>;
+const RoomPage = () => {
+  const { roomName } = useParams();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const [token, setToken] = useState(null);
+  const navigate = useNavigate();
+  const joinRequestSent = useRef(false);
+
+  const url = import.meta.env.VITE_PLATFORM === 'dev'
+    ? import.meta.env.VITE_LOCALHOST_URL
+    : import.meta.env.VITE_BACKEND_URL;
+
+  const handleDisconnected = useCallback((reason) => {
+    const isHost = searchParams.get("host") === "true";
+
+    if (isHost && reason === DisconnectReason.CLIENT_INITIATED) {
+        navigate("/");
+        return;
+    }
+    
+    let message = "You have been disconnected from the room.";
+    switch (reason) {
+        case DisconnectReason.CLIENT_INITIATED:
+            message = "You left the room.";
+            break;
+        case DisconnectReason.PARTICIPANT_REMOVED:
+            message = "The host removed you from the room.";
+            break;
+        case DisconnectReason.ROOM_DELETED:
+            message = "The host ended the room.";
+            break;
+        default:
+            break;
+    }
+
+    navigate("/", { 
+        state: { 
+            message, 
+            type: "info" 
+        } 
+    });
+  }, [navigate, searchParams]);
+
+  useEffect(() => {
+    const isHost = searchParams.get("host") === "true";
+    const identity = user?.name || "Guest";
+
+    const fetchToken = async () => {
+        try {
+            if (isHost) {
+                const res = await axios.post(`${url}/get-token`, { roomName, identity, isHost });
+                setToken(res.data.token);
+            } else {
+                if (!joinRequestSent.current) {
+                    await axios.post(`${url}/get-token`, { roomName, identity, isHost });
+                    joinRequestSent.current = true;
+                }
+                
+                const interval = setInterval(async () => {
+                    try {
+                        const tokenRes = await axios.get(`${url}/waiting-room/token/${roomName}/${identity}`);
+                        if (tokenRes.data.token) {
+                            setToken(tokenRes.data.token);
+                            clearInterval(interval);
+                        }
+                    } catch (err) { /* Still waiting for approval */ }
+                }, 3000);
+
+                return () => clearInterval(interval);
+            }
+        } catch (error) {
+            if (error.response?.status !== 202) {
+                console.error("Failed to get token:", error);
+                navigate("/");
+            }
+        }
+    };
+
+    if (user) {
+        fetchToken();
+    }
+  }, [roomName, navigate, url, user, searchParams]);
+
+  if (!token) {
+    const isHost = searchParams.get("host") === "true";
+    return <div className="loading-screen"><p className="loading-text">{isHost ? "Loading..." : "Waiting for host to approve..."}</p></div>;
   }
   
-  if(!token && isHost) {
-      return <div className="loading-screen"><p className="loading-text">Loading...</p></div>;
-  }
-
   return (
-    <>
-      <audio ref={audioRef} src={notificationSound} preload="auto" />
-      <ShareModal
-        isOpen={showShareModal}
-        onRequestClose={() => setShowShareModal(false)}
-        roomUrl={roomUrl}
-      />
-      {isHost && (
-        <>
-            <button
-                ref={buttonRef}
-                className="floating-menu-button"
-                style={{ top: `${position.y}px`, left: `${position.x}px` }}
-                onMouseDown={handleDragStart}
-                onTouchStart={handleDragStart}
-                onClick={handleMenuButtonClick}
-            >
-                <HamburgerIcon />
-                {pendingParticipants.length > 0 && <span className="notification-badge menu-badge">{pendingParticipants.length}</span>}
-            </button>
-            <MenuModal
-                isOpen={showMenuModal}
-                onRequestClose={() => setShowMenuModal(false)}
-                onWaitingRoomClick={openWaitingRoom}
-                waitingRoomCount={pendingParticipants.length}
-            />
-            <WaitingRoomModal
-                isOpen={showWaitingRoom}
-                onRequestClose={() => setShowWaitingRoom(false)}
-                pendingParticipants={pendingParticipants}
-                onApprove={handleApproveParticipant}
-                onReject={handleRejectParticipant}
-                onBack={backToMenu}
-            />
-        </>
-      )}
-      <div data-lk-theme="default" className="room-page-container">
-        <LiveKitRoom
-          token={token}
-          serverUrl={import.meta.env.VITE_LIVEKIT_URL}
-          connectOptions={{ autoSubscribe: true }}
-          audio={searchParams.get("mic") !== "false"}
-          video={searchParams.get("video") !== "false"}
-          onDisconnected={handleEndCall}
-        >
-          <VideoConference />
-        </LiveKitRoom>
-      </div>
-    </>
-  );
-};
+    <LiveKitRoom
+      token={token}
+      serverUrl={import.meta.env.VITE_LIVEKIT_URL}
+      connectOptions={{ autoSubscribe: true }}
+      audio={searchParams.get("mic") !== "false"}
+      video={searchParams.get("video") !== "false"}
+      onDisconnected={handleDisconnected}
+    >
+      <RoomPageContent />
+    </LiveKitRoom>
+  )
+}
 
 export default RoomPage;
