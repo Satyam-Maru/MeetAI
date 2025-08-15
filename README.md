@@ -1,5 +1,3 @@
-An updated `README.md` file for the project is below.
-
 # MeetAI 📹
 
 MeetAI is a real-time video conferencing application built with the MERN stack (MongoDB, Express, React, Node.js) and integrated with the LiveKit API for video and audio functionalities. It provides a seamless and interactive video meeting experience with features like user authentication, room management, and a waiting room for hosts to control participant access.
