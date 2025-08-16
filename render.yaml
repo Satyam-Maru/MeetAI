@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: meetai-app
+    env: node
+    rootDir: ./server
+    buildCommand: "npm install"
+    startCommand: "npm start"
+    envVars:
+      - key: NODE_VERSION
+        value: 16.20.1
+  - type: worker
+    name: livekit-agent
+    env: node
+    rootDir: ./server
+    buildCommand: "npm install"
+    startCommand: "npm run start:agent"
+    envVars:
+      - key: NODE_VERSION
+        value: 16.20.1
