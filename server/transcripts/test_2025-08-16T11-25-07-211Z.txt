@@ -1,0 +1,37 @@
+=== TRANSCRIPT ===
+Room: test
+Started: 16/8/2025, 4:55:07 pm
+=====================================
+
+[4:55:29 pm] Speaker 6KSn: Speech to text, also known as speech recognition.
+[4:55:33 pm] Speaker 6KSn: Is the process of converting spoken words into written text.
+[4:55:37 pm] Speaker 6KSn: It's used in a wide variety of applications from virtual assistance to dictations of
+[4:55:42 pm] Speaker 6KSn: software. This video demonstrates how to use Google's
+[4:55:46 pm] Speaker 6KSn: speech to text API with Python.
+[4:55:49 pm] Speaker 6KSn: Here's a breakdown of how it works and some examples. How it works?
+[4:55:53 pm] Speaker 6KSn: Speech to text technology uses natural language processing, NLP, to analyze
+[4:55:58 pm] Speaker 6KSn: audio input and convert it into text. This involves several steps.
+[4:56:03 pm] Speaker 6KSn: One, audio capture. The system captures the audio through a microphone
+[4:56:08 pm] Speaker 6KSn: or other audio input device. Two,
+[4:56:11 pm] Speaker 6KSn: feature extraction. The audio signal is processed to extract
+[4:56:15 pm] Speaker 6KSn: relevant features such as sound waves and phonemes.
+[4:56:19 pm] Speaker 6KSn: Three, pattern recognition. The extracted features are moved
+[4:56:23 pm] Speaker 6KSn: compared to a database of known speech patterns to identify the spoken words.
+[4:56:28 pm] Speaker 6KSn: And for text generation, the identified words are sent
+[4:56:32 pm] Speaker 6KSn: assembled into a written transcript.
+[4:56:35 pm] Speaker 6KSn: Can watch his video to learn how to convert text to speech using Python.
+[4:56:40 pm] Speaker 6KSn: Examples of speech to text applications. One,
+[4:56:45 pm] Speaker 6KSn: virtual assistance. Saleen, Alexa, Google Assistant,
+[4:56:49 pm] Speaker 6KSn: and other virtual assistants use speech to text to understand user requests and respond
+[4:56:53 pm] Speaker 6KSn: spoken or written output to dictation software.
+[4:56:58 pm] Speaker 6KSn: Applications like Google Docs voice typing allow users to dictate
+[4:57:04 pm] Speaker 6KSn: Three, accessibility tools.
+[4:57:07 pm] Speaker 6KSn: Speech to text can be used to create captions for videos or to provide alternate
+[4:57:09 pm] Speaker 6KSn: input methods for people with disabilities.
+[4:57:14 pm] Speaker 6KSn: Four, transcribing audio recordings,
+[4:57:23 pm] Speaker 6KSn: Services like Notar and Jamie AI use speech to text to convert audio files into written text. Five, voice commands. Speech to text
+[4:57:27 pm] Speaker 6KSn: enables users to control devices and applications with voice commands.
+[4:57:28 pm] Speaker 6KSn: Such as turning on lights or playing music.
+[4:57:33 pm] Speaker 6KSn: And six, live transcription.
+[4:57:37 pm] Speaker 6KSn: Some applications offer real time transcription of audio stream.
+[4:57:39 pm] Speaker 6KSn: Which can be useful for meetings, lectures, or interviews.

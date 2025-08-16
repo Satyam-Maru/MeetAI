@@ -4,15 +4,19 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "dev": "nodemon index.js"
-  },
+  "test": "echo \"Error: no test specified\" && exit 1",
+  "start": "node index.js",
+  "dev": "nodemon index.js",
+  "start:agent": "node --require dotenv/config agents/transcriptionAgent.js start"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@deepgram/sdk": "^3.0.0",
+    "@livekit/agents": "^0.7.9",
+    "@livekit/rtc-node": "^0.13.12",
     "bcryptjs": "^3.0.2",
     "bloom-filters": "^3.0.4",
     "cookie-parser": "^1.4.7",

@@ -1,0 +1,23 @@
+/* client/src/styles/LiveCaptions.css */
+.live-captions-container {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 800px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.caption-segment {
+  margin-bottom: 5px;
+}
+
+.caption-text {
+  font-size: 1.2rem;
+}
