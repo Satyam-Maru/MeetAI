@@ -1,4 +1,3 @@
-// server/agents/transcriptionAgent.js
 import { WorkerOptions, cli, defineAgent } from "@livekit/agents";
 import { AudioStream, RoomEvent, TrackKind } from "@livekit/rtc-node";
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";

@@ -11,6 +11,7 @@ const MenuModal = ({
   waitingRoomCount,
   onToggleCaptions,
   isCaptionsEnabled,
+  isHost,
 }) => {
   return (
     <Modal
@@ -21,19 +22,21 @@ const MenuModal = ({
       ariaHideApp={false}
     >
       <div className="menu-modal-header">
-        <h2>Host Menu</h2>
+        <h2>Menu</h2>
         <button onClick={onRequestClose} className="close-button">
           &times;
         </button>
       </div>
       <div className="menu-modal-body">
         <div className="menu-grid">
-          <button className="menu-item" onClick={onWaitingRoomClick}>
-            <span className="menu-item-text">Waiting Room</span>
-            {waitingRoomCount > 0 && (
-              <span className="notification-badge">{waitingRoomCount}</span>
-            )}
-          </button>
+          {isHost && (
+            <button className="menu-item" onClick={onWaitingRoomClick}>
+              <span className="menu-item-text">Waiting Room</span>
+              {waitingRoomCount > 0 && (
+                <span className="notification-badge">{waitingRoomCount}</span>
+              )}
+            </button>
+          )}
           <button className="menu-item" onClick={onJoinedUsersClick}>
             <span className="menu-item-text">Joined Users</span>
           </button>

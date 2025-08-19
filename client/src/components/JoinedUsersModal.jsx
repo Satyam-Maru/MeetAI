@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Modal from 'react-modal';
 import '../styles/JoinedUsersModal.css';
 
-const JoinedUsersModal = ({ isOpen, onRequestClose, participants, onRemoveParticipant, onBack, hostIdentity }) => {
+const JoinedUsersModal = ({ isOpen, onRequestClose, participants, onRemoveParticipant, onBack, hostIdentity, isHost }) => {
   const [removingId, setRemovingId] = useState(null);
 
   const handleRemoveClick = async (identity) => {
@@ -42,7 +42,7 @@ const JoinedUsersModal = ({ isOpen, onRequestClose, participants, onRemovePartic
                     {participant.identity === hostIdentity && <span className="host-tag"> (Host)</span>}
                   </div>
                 </div>
-                {participant.identity !== hostIdentity && (
+                {isHost && participant.identity !== hostIdentity && (
                   <div className="action-buttons">
                     <button 
                       onClick={() => handleRemoveClick(participant.identity)} 

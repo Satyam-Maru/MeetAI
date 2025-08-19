@@ -1,5 +1,3 @@
-// client/src/pages/RoomPage.jsx
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
@@ -235,50 +233,55 @@ const RoomPageContent = () => {
         onRequestClose={() => setShowShareModal(false)}
         roomUrl={roomUrl}
       />
+      
+      <button
+        ref={buttonRef}
+        className="floating-menu-button"
+        style={{ top: `${position.y}px`, left: `${position.x}px` }}
+        onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
+        onClick={handleMenuButtonClick}
+      >
+        <HamburgerIcon />
+        {isHost && pendingParticipants.length > 0 && (
+          <span className="notification-badge menu-badge">
+            {pendingParticipants.length}
+          </span>
+        )}
+      </button>
+
+      <MenuModal
+        isOpen={showMenuModal}
+        onRequestClose={() => setShowMenuModal(false)}
+        onWaitingRoomClick={openWaitingRoom}
+        onJoinedUsersClick={openJoinedUsers}
+        waitingRoomCount={pendingParticipants.length}
+        onToggleCaptions={toggleCaptions}
+        isCaptionsEnabled={showCaptions}
+        isHost={isHost}
+      />
+
       {isHost && (
-        <>
-          <button
-            ref={buttonRef}
-            className="floating-menu-button"
-            style={{ top: `${position.y}px`, left: `${position.x}px` }}
-            onMouseDown={handleDragStart}
-            onTouchStart={handleDragStart}
-            onClick={handleMenuButtonClick}
-          >
-            <HamburgerIcon />
-            {pendingParticipants.length > 0 && (
-              <span className="notification-badge menu-badge">
-                {pendingParticipants.length}
-              </span>
-            )}
-          </button>
-          <MenuModal
-            isOpen={showMenuModal}
-            onRequestClose={() => setShowMenuModal(false)}
-            onWaitingRoomClick={openWaitingRoom}
-            onJoinedUsersClick={openJoinedUsers}
-            waitingRoomCount={pendingParticipants.length}
-            onToggleCaptions={toggleCaptions}
-            isCaptionsEnabled={showCaptions}
-          />
-          <WaitingRoomModal
-            isOpen={showWaitingRoom}
-            onRequestClose={() => setShowWaitingRoom(false)}
-            pendingParticipants={pendingParticipants}
-            onApprove={handleApproveParticipant}
-            onReject={handleRejectParticipant}
-            onBack={backToMenu}
-          />
-          <JoinedUsersModal
-            isOpen={showJoinedUsersModal}
-            onRequestClose={() => setShowJoinedUsersModal(false)}
-            participants={participants}
-            onRemoveParticipant={handleRemoveParticipant}
-            onBack={backToMenu}
-            hostIdentity={user.name}
-          />
-        </>
+        <WaitingRoomModal
+          isOpen={showWaitingRoom}
+          onRequestClose={() => setShowWaitingRoom(false)}
+          pendingParticipants={pendingParticipants}
+          onApprove={handleApproveParticipant}
+          onReject={handleRejectParticipant}
+          onBack={backToMenu}
+        />
       )}
+
+      <JoinedUsersModal
+        isOpen={showJoinedUsersModal}
+        onRequestClose={() => setShowJoinedUsersModal(false)}
+        participants={participants}
+        onRemoveParticipant={handleRemoveParticipant}
+        onBack={backToMenu}
+        hostIdentity={user.name}
+        isHost={isHost}
+      />
+      
       <div data-lk-theme="default" className="room-page-container">
         <VideoConference />
         {showCaptions && <LiveCaptions />}
