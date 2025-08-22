@@ -32,6 +32,7 @@ export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [authMode, setAuthMode] = useState("signin");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -224,6 +225,47 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const handleForgotPassword = () => {
+    setAuthError("");
+    setAuthMode('resetPassword');
+    startResendCooldown();
+  
+    axios.post(`${url}/api/auth/forgot-password`, { email })
+      .catch(err => {
+        setAuthMode('forgotPassword'); // Revert UI on error
+        if (err.response && err.response.data && err.response.data.error) {
+          setAuthError(err.response.data.error);
+        } else {
+          setAuthError("An unexpected error occurred. Please try again.");
+        }
+      });
+  };
+
+  const handleResetPassword = async (code) => {
+    try {
+      setAuthError("");
+      const response = await axios.post(`${url}/api/auth/reset-password`, {
+        email,
+        verificationCode: code,
+        newPassword,
+      });
+      const { user, token } = response.data;
+      localStorage.setItem("authToken", token);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      setUser(user);
+      setIsLoggedIn(true);
+      setShowAuthModal(false);
+      const from = location.state?.from?.pathname || "/";
+      navigate(from, { replace: true });
+    } catch (err) {
+      if (err.response && err.response.data && err.response.data.error) {
+        setAuthError(err.response.data.error);
+      } else {
+        setAuthError("An unexpected error occurred. Please try again.");
+      }
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await axios.post(`${url}/api/auth/logout`);
@@ -253,11 +295,13 @@ export const AuthProvider = ({ children }) => {
         isLoggedIn,
         email,
         password,
+        newPassword,
         authMode,
         showAuthModal,
         authError,
         setEmail,
         setPassword,
+        setNewPassword,
         setAuthMode,
         setShowAuthModal,
         setAuthError,
@@ -272,6 +316,8 @@ export const AuthProvider = ({ children }) => {
         handleVerification,
         resendVerificationCode,
         resendCooldown,
+        handleForgotPassword,
+        handleResetPassword,
       }}
     >
       {notification.visible && (

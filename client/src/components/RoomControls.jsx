@@ -35,6 +35,7 @@ const RoomControls = ({ onLogout, user }) => {
     try {
       const url = new URL(value);
       const pathParts = url.pathname.split('/').filter(part => part);
+      console.log(pathParts);
       if (pathParts[0] === 'room' && pathParts[1]) {
         return pathParts[1];
       }

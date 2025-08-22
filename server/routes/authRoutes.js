@@ -39,6 +39,27 @@ const createVerificationEmailHTML = (code) => {
   `;
 };
 
+const createPasswordResetEmailHTML = (code) => {
+  return `
+    <div style="font-family: Arial, sans-serif; text-align: center; color: #333; padding: 20px;">
+      <div style="max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 10px; padding: 40px; background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        <h2 style="color: #1e1e1e; font-size: 24px;">MeetAI Password Reset</h2>
+        <p style="color: #555; font-size: 16px;">
+          You requested a password reset. Use the following code to reset your password.
+        </p>
+        <div style="margin: 30px 0;">
+          <span style="display: inline-block; font-size: 36px; font-weight: bold; letter-spacing: 10px; color: #fff; background-color: #2a2a2a; padding: 15px 30px; border-radius: 8px;">
+            ${code}
+          </span>
+        </div>
+        <p style="color: #777; font-size: 14px;">
+          This code will expire in 10 minutes. If you did not request this, please ignore this email.
+        </p>
+      </div>
+    </div>
+  `;
+};
+
 router.get('/profile', verifyToken, (req, res) => {
   res.json({ user: req.user, success: true });
 });
@@ -210,6 +231,79 @@ router.post('/resend-verification', async (req, res) => {
     res.status(200).json({ message: 'A new verification code has been sent to your email.' });
   } catch (err) {
     console.error('Error resending verification code:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const redis = req.app.get('redis');
+    
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'No account found with that email address.' });
+    }
+    if (user.isGoogleUser) {
+      return res.status(400).json({ error: 'This account uses Google Sign-In. Please log in with Google.' });
+    }
+
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    await redis.set(`reset_code:${email}`, resetCode, 'EX', 600); // Expires in 10 minutes
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'MeetAI Password Reset',
+      html: createPasswordResetEmailHTML(resetCode),
+    };
+    
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ message: 'Password reset code sent to your email.' });
+  } catch (err) {
+    console.error('Error during forgot password:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, verificationCode, newPassword } = req.body;
+    const redis = req.app.get('redis');
+
+    const storedCode = await redis.get(`reset_code:${email}`);
+    if (!storedCode) {
+      return res.status(400).json({ error: 'Reset code has expired. Please try again.' });
+    }
+    if (storedCode !== verificationCode) {
+      return res.status(400).json({ error: 'Invalid reset code.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const user = await User.findOneAndUpdate({ email }, { password: hashedPassword }, { new: true });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    await redis.del(`reset_code:${email}`);
+
+    const userPayload = {
+      name: user.name,
+      email: user.email,
+      isGoogleUser: user.isGoogleUser,
+      photoURL: user.photoURL,
+    };
+
+    await redis.set(`user:${email}`, JSON.stringify(userPayload));
+
+    const authToken = jwt.sign(userPayload, process.env.JWT_SECRET, { expiresIn: '3d' });
+
+    res.json({ user: userPayload, token: authToken });
+  } catch (err) {
+    console.error('Error during password reset:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
