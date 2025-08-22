@@ -111,11 +111,6 @@ Started: ${new Date().toLocaleString()}
               console.log(`📦 Frame ${frameCount}: ${frame.data.length} bytes`);
             }
 
-            // Log every 100 frames to monitor ongoing activity
-            if (frameCount % 100 === 0) {
-              console.log(`🔄 Processed ${frameCount} frames so far...`);
-            }
-
             if (isConnectionOpen && dgConnection.getReadyState() === 1) {
               dgConnection.send(frame.data);
             } else if (dgConnection.getReadyState() === 3) {
@@ -145,10 +140,6 @@ Started: ${new Date().toLocaleString()}
         try {
           const text = data.channel.alternatives[0].transcript;
           if (text) {
-            console.log("📢 Transcription:", `"${text}"`, `(Final: ${data.is_final})`);
-
-            // Save to file (only final transcripts)
-            saveToFile(text, data.is_final, track.sid);
 
             const payload = JSON.stringify([{
               id: data.metadata?.request_id || Math.random().toString(36).substring(7),
@@ -178,21 +169,6 @@ Started: ${new Date().toLocaleString()}
         isConnectionOpen = false;
       });
     };
-
-    // Handle room disconnection - save final summary
-    ctx.room.on('disconnected', async () => {
-      try {
-        const footer = `\n=====================================
-Session ended: ${new Date().toLocaleString()}
-Total speakers: ${participantTranscripts.size}
-=====================================`;
-
-        await appendFile(transcriptFile, footer);
-        console.log(`📝 Transcript session ended. File saved: ${transcriptFile}`);
-      } catch (error) {
-        console.error('❌ Error saving final transcript:', error);
-      }
-    });
 
     ctx.room.on(RoomEvent.TrackSubscribed, (track) => {
       console.log(`📥 Track subscribed: ${track.sid}, kind: ${track.kind}, source: ${track.source}`);
