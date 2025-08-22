@@ -2,9 +2,6 @@ import { WorkerOptions, cli, defineAgent } from "@livekit/agents";
 import { AudioStream, RoomEvent, TrackKind } from "@livekit/rtc-node";
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 import { fileURLToPath } from "url";
-import { writeFile, appendFile, mkdir } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
 
 export default defineAgent({
   entry: async (ctx) => {
@@ -12,54 +9,6 @@ export default defineAgent({
     console.log("✅ Agent connected to LiveKit");
 
     const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
-
-    // Create transcription file setup
-    const transcriptsDir = './transcripts';
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const roomName = ctx.room.name || 'unknown-room';
-    const transcriptFile = path.join(transcriptsDir, `${roomName}_${timestamp}.txt`);
-
-    // Ensure transcripts directory exists
-    if (!existsSync(transcriptsDir)) {
-      await mkdir(transcriptsDir, { recursive: true });
-    }
-
-    // Initialize transcript file with header
-    const header = `=== TRANSCRIPT ===
-Room: ${roomName}
-Started: ${new Date().toLocaleString()}
-=====================================
-
-`;
-    await writeFile(transcriptFile, header);
-    console.log(`📝 Transcript will be saved to: ${transcriptFile}`);
-
-    // Track participants and their transcripts
-    const participantTranscripts = new Map();
-
-    const saveToFile = async (text, isFinal, trackSid) => {
-      try {
-        const timestamp = new Date().toLocaleTimeString();
-
-        if (isFinal) {
-          // Only save final transcripts to avoid duplicates
-          const entry = `[${timestamp}] Speaker ${trackSid.slice(-4)}: ${text}\n`;
-          await appendFile(transcriptFile, entry);
-          console.log(`💾 Saved to file: "${text}"`);
-
-          // Also maintain full transcript in memory
-          if (!participantTranscripts.has(trackSid)) {
-            participantTranscripts.set(trackSid, []);
-          }
-          participantTranscripts.get(trackSid).push({
-            timestamp: new Date(),
-            text: text
-          });
-        }
-      } catch (error) {
-        console.error('❌ Error saving transcript:', error);
-      }
-    };
 
     const transcribeTrack = async (track) => {
       console.log(`🎤 Attempting to transcribe track: ${track.sid}`);
