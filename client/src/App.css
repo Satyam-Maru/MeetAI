@@ -27,5 +27,7 @@ body::before {
 @media (max-width: 768px) {
   body {
     background-image: url("./assets/mobile-bg.png");
+    background-size: cover;
+    position: relative;
   }
 }
