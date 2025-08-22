@@ -12,7 +12,7 @@ const Notification = ({ message, type, onDismiss }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onDismiss();
-    }, 4000); // Auto-dismiss after 4 seconds
+    }, 4000); 
 
     return () => clearTimeout(timer);
   }, [onDismiss]);
@@ -36,6 +36,9 @@ export const AuthProvider = ({ children }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState("");
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationCode, setVerificationCode] = useState(Array(6).fill(""));
+  const [resendCooldown, setResendCooldown] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
   const [notification, setNotification] = useState({ visible: false, message: "", type: "error" });
@@ -75,25 +78,35 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     if (token) {
-      // If a token exists, set it as the default auth header for axios
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      fetchUser(); // fetchUser will now use the token from the header
+      fetchUser();
     } else {
       setLoading(false);
     }
   }, []);
 
+  useEffect(() => {
+    let timer;
+    if (resendCooldown > 0) {
+      timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+  
+  const startResendCooldown = () => {
+    setResendCooldown(60);
+  };
+
   const handleLoginSuccess = async ({ token: googleToken }) => {
     try {
       setAuthError("");
-      // The server now sends back a JWT for our API
       const response = await axios.post(`${url}/api/auth/login`, {
         token: googleToken,
       });
-      const { user, token } = response.data; // Destructure the user and our API token
+      const { user, token } = response.data;
 
-      localStorage.setItem("authToken", token); // Store the token
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; // Set for subsequent requests
+      localStorage.setItem("authToken", token);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
       setUser(user);
       setIsLoggedIn(true);
@@ -110,45 +123,104 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const handleEmailLogin = async (isSignUp) => {
+  const handleEmailLogin = (isSignUp) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+  
     if (!email || !password) {
       setAuthError("Email and password are required.");
       return;
     }
-
+  
     if (!emailRegex.test(email)) {
       setAuthError("Please enter a valid email address.");
       return;
     }
+  
+    setAuthError("");
+  
+    if (isSignUp) {
+      // Show verification modal immediately for a better user experience
+      setShowAuthModal(false);
+      setShowVerificationModal(true);
+      startResendCooldown();
+  
+      // Send the request in the background
+      axios.post(`${url}/api/auth/signup`, { email, password })
+        .catch(err => {
+          // Handle errors in the background
+          setShowVerificationModal(false); // Close verification modal on error
+          setShowAuthModal(true); // Re-open auth modal
+          if (err.response && err.response.data && err.response.data.error) {
+            setAuthError(err.response.data.error);
+          } else {
+            setAuthError("An unexpected error occurred. Please try again.");
+          }
+        });
+    } else {
+      // Handle sign-in
+      axios.post(`${url}/api/auth/signin`, { email, password })
+        .then(response => {
+          const { user, token } = response.data;
+          localStorage.setItem("authToken", token);
+          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+          setUser(user);
+          setIsLoggedIn(true);
+          setShowAuthModal(false);
+          const from = location.state?.from?.pathname || "/";
+          navigate(from, { replace: true });
+        })
+        .catch(err => {
+          if (err.code === "ERR_NETWORK") {
+            showNotification("Server is starting up. Please wait a moment.", "info");
+          } else if (err.response && err.response.data && err.response.data.error) {
+            setAuthError(err.response.data.error);
+          } else {
+            setAuthError("An unexpected error occurred. Please try again.");
+          }
+        });
+    }
+  };
 
+  const handleVerification = async (code) => {
     try {
       setAuthError("");
-      const endpoint = isSignUp ? "/api/auth/signup" : "/api/auth/signin";
-      const response = await axios.post(`${url}${endpoint}`, {
+      const response = await axios.post(`${url}/api/auth/verify`, {
         email,
-        password,
+        verificationCode: code,
       });
-      const { user, token } = response.data; // Destructure the user and our API token
+      const { user, token } = response.data;
 
-      localStorage.setItem("authToken", token); // Store the token
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; // Set for subsequent requests
+      localStorage.setItem("authToken", token);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
       setUser(user);
       setIsLoggedIn(true);
-      setShowAuthModal(false);
+      setShowVerificationModal(false);
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     } catch (err) {
-      if (err.code === "ERR_NETWORK") {
-        showNotification("Server is starting up. Please wait a moment.", "info");
-      } else if (err.response && err.response.data && err.response.data.error) {
+      if (err.response && err.response.data && err.response.data.error) {
         setAuthError(err.response.data.error);
       } else {
         setAuthError("An unexpected error occurred. Please try again.");
       }
-      console.log(err.message)
+    }
+  };
+
+  const resendVerificationCode = async () => {
+    if (resendCooldown > 0) return;
+    try {
+      setAuthError("");
+      setVerificationCode(Array(6).fill("")); // Clear old code
+      await axios.post(`${url}/api/auth/resend-verification`, { email });
+      showNotification("A new verification code has been sent.", "info");
+      startResendCooldown();
+    } catch (err) {
+      if (err.response && err.response.data && err.response.data.error) {
+        setAuthError(err.response.data.error);
+      } else {
+        setAuthError("Failed to resend verification code. Please try again.");
+      }
     }
   };
 
@@ -158,7 +230,6 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error("Logout failed:", err);
     } finally {
-      // Clear user state and remove the token from storage
       setUser(null);
       setIsLoggedIn(false);
       localStorage.removeItem("authToken");
@@ -193,7 +264,14 @@ export const AuthProvider = ({ children }) => {
         handleEmailLogin,
         handleLoginSuccess,
         handleLogout,
-        showNotification
+        showNotification,
+        showVerificationModal,
+        setShowVerificationModal,
+        verificationCode,
+        setVerificationCode,
+        handleVerification,
+        resendVerificationCode,
+        resendCooldown,
       }}
     >
       {notification.visible && (

@@ -269,3 +269,53 @@
   -webkit-box-shadow: 0 0 0 30px white inset !important;
   -webkit-text-fill-color: black !important;
 }
+
+.verification-code-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.verification-code-input {
+  width: 40px;
+  height: 50px;
+  text-align: center;
+  font-size: 1.5rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+}
+
+.verification-code-input:focus {
+  border-color: #007bff;
+}
+
+.resend-container {
+  text-align: center;
+  margin-top: 10px;
+  color: #555;
+}
+
+.resend-container p {
+  font-size: medium;
+  color: black;
+}
+
+.resend-container button{
+  background: none;
+  border: none;
+  color: black;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+  font-size: 1rem;
+  padding: 0; 
+  margin-left: 5px;
+}
+
+.resend-container button:hover {
+  background: none;
+  border: none;
+  color: #313336;
+}
