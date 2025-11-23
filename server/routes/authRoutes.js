@@ -92,13 +92,13 @@ router.post('/login', async (req, res) => {
     };
 
     await User.findOneAndUpdate(
-        { email: userData.email },
-        { ...userData, password: "" },
-        { upsert: true, new: true }
+      { email: userData.email },
+      { ...userData, password: "" },
+      { upsert: true, new: true }
     );
 
 
-    await redis.set(`user:${userData.email}`, JSON.stringify(userData));
+    await redis.set(`user:${userData.email}`, JSON.stringify(userData), 'EX', 60 * 60 * 12 * 7);
 
     const authToken = jwt.sign(userData, process.env.JWT_SECRET, {
       expiresIn: '3d',
@@ -192,7 +192,7 @@ router.post('/verify', async (req, res) => {
       photoURL: newUser.photoURL,
     };
 
-    await redis.set(`user:${email}`, JSON.stringify(userPayload));
+    await redis.set(`user:${email}`, JSON.stringify(userPayload), 'EX', 60 * 60 * 12 * 7 );
 
     const authToken = jwt.sign(userPayload, process.env.JWT_SECRET, { expiresIn: '3d' });
 
@@ -239,7 +239,7 @@ router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
     const redis = req.app.get('redis');
-    
+
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ error: 'No account found with that email address.' });
@@ -249,7 +249,7 @@ router.post('/forgot-password', async (req, res) => {
     }
 
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    
+
     await redis.set(`reset_code:${email}`, resetCode, 'EX', 600); // Expires in 10 minutes
 
     const mailOptions = {
@@ -258,7 +258,7 @@ router.post('/forgot-password', async (req, res) => {
       subject: 'MeetAI Password Reset',
       html: createPasswordResetEmailHTML(resetCode),
     };
-    
+
     await transporter.sendMail(mailOptions);
 
     res.status(200).json({ message: 'Password reset code sent to your email.' });
@@ -283,7 +283,7 @@ router.post('/reset-password', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     const user = await User.findOneAndUpdate({ email }, { password: hashedPassword }, { new: true });
-    
+
     if (!user) {
       return res.status(404).json({ error: 'User not found.' });
     }
@@ -297,7 +297,7 @@ router.post('/reset-password', async (req, res) => {
       photoURL: user.photoURL,
     };
 
-    await redis.set(`user:${email}`, JSON.stringify(userPayload));
+    await redis.set(`user:${email}`, JSON.stringify(userPayload), 'EX', 60 * 60 * 12 * 7);
 
     const authToken = jwt.sign(userPayload, process.env.JWT_SECRET, { expiresIn: '3d' });
 
@@ -318,32 +318,46 @@ router.post('/signin', async (req, res) => {
   try {
     const redis = req.app.get('redis');
 
+    // first check if user profile is available in cache
     const cachedUserData = await redis.get(`user:${email}`);
 
-    if (!cachedUserData) {
-      return res.status(404).json({ error: 'Account not found. Please sign up.' });
+    // handled signin with redis cache
+    if (cachedUserData) {
+      const userPayload = JSON.parse(cachedUserData);
+
+      if (userPayload.isGoogleUser) {
+        return res.status(400).json({ error: 'This account is registered with Google. Please use "Continue with Google".' });
+      }
+
+      const authToken = jwt.sign(userPayload, process.env.JWT_SECRET, { expiresIn: '3d' });
+      console.log("********* Logged in using redis cache. **************");
+      res.json({ user: userPayload, token: authToken });
     }
+    else {
+      // if user profile is not in cache -> check in mongodb (source of truth)
+      const userFromDB = await User.findOne({ email });
+      if (!userFromDB) {
+        return res.status(400).json({ error: 'Invalid credentials' });
+      }
 
-    const userPayload = JSON.parse(cachedUserData);
+      const isMatch = await userFromDB.comparePassword(password);
+      if (!isMatch) {
+        return res.status(400).json({ error: 'Invalid credentials' });
+      }
 
-    if (userPayload.isGoogleUser) {
-      return res.status(400).json({ error: 'This account is registered with Google. Please use "Continue with Google".' });
+      const userPayload = {
+        name: userFromDB.name,
+        email: userFromDB.email,
+        isGoogleUser: userFromDB.isGoogleUser,
+        photoUrl: userFromDB.photoURL
+      }
+
+      // store in redis cache 
+      await redis.set(`user:${email}`, JSON.stringify(userPayload), 'EX', 60);
+      
+      const authToken = jwt.sign(userPayload, process.env.JWT_SECRET, { expiresIn: '3d' });
+      res.json({ user: userPayload, token: authToken });
     }
-
-    const userFromDB = await User.findOne({ email });
-    if (!userFromDB) {
-      return res.status(400).json({ error: 'Invalid credentials' });
-    }
-
-    const isMatch = await userFromDB.comparePassword(password);
-    if (!isMatch) {
-      return res.status(400).json({ error: 'Invalid credentials' });
-    }
-
-    const authToken = jwt.sign(userPayload, process.env.JWT_SECRET, { expiresIn: '3d' });
-    
-    res.json({ user: userPayload, token: authToken  });
-
   } catch (err) {
     console.error('Error during signin:', err);
     res.status(500).json({ error: 'Server error' });

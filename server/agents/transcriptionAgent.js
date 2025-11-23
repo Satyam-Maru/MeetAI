@@ -129,3 +129,6 @@ export default defineAgent({
 });
 
 cli.runApp(new WorkerOptions({ agent: fileURLToPath(import.meta.url) }));
+
+// To run agents, write this prompt into package.json/scripts
+// "start:agent": "node --require dotenv/config agents/transcriptionAgent.js start"
