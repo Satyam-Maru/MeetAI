@@ -329,9 +329,6 @@ router.post('/signin', async (req, res) => {
         return res.status(400).json({ error: 'This account is registered with Google. Please use "Continue with Google".' });
       }
 
-      const authToken = jwt.sign(userPayload, process.env.JWT_SECRET, { expiresIn: '3d' });
-      console.log("********* Logged in using redis cache. **************");
-      res.json({ user: userPayload, token: authToken });
     }
     else {
       // if user profile is not in cache -> check in mongodb (source of truth)
